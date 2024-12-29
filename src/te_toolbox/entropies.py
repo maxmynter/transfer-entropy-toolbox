@@ -20,13 +20,15 @@ def entropy(
         ValueError: If data dimensions are invalid
 
     """
+    if data.size == 0:
+        raise ValueError("Cannot compute entropy of empty array")
+
     match data.ndim:
         case 1:
             hist, _ = np.histogram(data, bins = bins) 
-            hist /= len(data)
-            nonzero_mask= hist != 0
-            contrib = np.where(nonzero_mask, hist* np.log(hist), 0)
-            return -np.sum(contrib)
+            hist = hist / len(data)
+            hist = np.where(hist==0, 1, hist)
+            return -np.sum(hist * np.log(hist))
         case 2:
             n_vars = data.shape[1]
             if isinstance(bins, (int, float)):
