@@ -1,0 +1,27 @@
+[project]
+name="discretized-te"
+version= "0.1.0"
+authors = [
+	{name = "Max Mynter"}
+]
+description = "A paper from my M.Sc. thesis about the problems of Transfer Entropy from discretized continuous time series."
+readme="README.md"
+requires-python=">3.8"
+dependencies= [
+	"numpy", "pandas", "matplotlib"
+]
+
+[project.optional-dependencies]
+test=["pytest", "pytest-cov"]
+dev=["ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+select = ["E", "F", "I", "B", "W", "C90", "N", "D", "UP", "PL", "RUF"]
+ignore = []
+line-length = 88
+indent-width = 4
+target-version = "py38"
+
