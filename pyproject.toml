@@ -1,19 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name="discretized-te"
-version= "0.1.0"
+name = "te-toolbox"
+version = "0.1.0"
 authors = [
-	{name = "Max Mynter"}
+    {name = "Max Mynter"}
 ]
 description = "A paper from my M.Sc. thesis about the problems of Transfer Entropy from discretized continuous time series."
-readme="README.md"
-requires-python=">3.8"
-dependencies= [
-	"numpy", "pandas", "matplotlib"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib"
 ]
 
 [project.optional-dependencies]
-test=["pytest", "pytest-cov"]
-dev=["ruff"]
+test = ["pytest", "pytest-cov"]
+dev = ["ruff"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -23,5 +29,7 @@ select = ["E", "F", "I", "B", "W", "C90", "N", "D", "UP", "PL", "RUF"]
 ignore = []
 line-length = 88
 indent-width = 4
-target-version = "py38"
+target-version = "py10"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/te_toolbox"]
