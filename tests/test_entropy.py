@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from te_toolbox.entropies import entropy, joint_entropy
-from tests.conftest import bin_generator
+from tests.conftest import bin_generator, regularize_hypothesis_generated_data
 
 
 def test_entropy_uniform_distribution():
@@ -81,13 +81,7 @@ def test_entropy_numerical_stability():
 )
 def test_entropy_additivity_independent(x, y):
     """Test that entropy is additive for independent variables."""
-    # Ensure x and y have the same length
-    min_length = min(len(x), len(y))
-    x = x[:min_length]
-    y = y[:min_length]
-
-    # Stack independent sequences
-    data = np.column_stack([x, y])
+    data = regularize_hypothesis_generated_data(x, y)
 
     bins = bin_generator(data, 10)
     h_joint = joint_entropy(data, bins=bins)
@@ -112,7 +106,6 @@ def test_entropy_data_processing_inequality(data):
     h_original = entropy(data, bins=bins)
     h_processed = entropy(processed, bins=bins)
 
-    # Data processing inequality: processing cannot increase entropy
     assert (
         h_processed <= h_original + 1e-6
     ), f"Entropy increased: original {h_original}, processed {h_processed}"
