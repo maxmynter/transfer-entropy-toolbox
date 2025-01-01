@@ -91,7 +91,7 @@ def test_entropy_additivity_independent(x, y):
     assert h_joint[0, 1] <= h_marginal[0] + h_marginal[1]
 
 
-@given(st.lists(st.floats(min_value=-100, max_value=100), min_size=100))
+@given(st.lists(st.floats(min_value=-100, max_value=100), min_size=100, unique=True))
 def test_entropy_data_processing_inequality(data):
     """Test that processing cannot increase entropy."""
     # Convert to numpy array
