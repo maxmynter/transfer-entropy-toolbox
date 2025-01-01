@@ -10,7 +10,7 @@ VECTOR_DIMS = 1
 def entropy(
     data: npt.NDArray[np.float64],
     bins: int | list[int] | npt.NDArray[np.float64],
-):
+) -> npt.NDArray[np.float64] | np.float64:
     """Calculate the entropy of one or more datasets.
 
     Args:
@@ -50,8 +50,10 @@ def entropy(
             )
 
 
-def joint_entropy(data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64]):
-    """Calculate joint entropy between all pairs of variables in the dataset.
+def joint_entropy(
+    data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64]
+) -> npt.NDArray[np.float64]:
+    """Calculate pairwise joint entropy between all variables in the dataset.
 
     Args:
     ----
@@ -72,8 +74,6 @@ def joint_entropy(data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float
         ValueError: If data has invalid dimensions or single variable.
 
     """
-    if data.ndim != MATRIX_DIMS:
-        raise ValueError("Need 2 time series to calculate joint entropy")
     if data.ndim != MATRIX_DIMS:
         raise ValueError("Data must be 2-dimensional [timesteps x variables]")
 
@@ -104,9 +104,32 @@ def joint_entropy(data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float
     return jent
 
 
+def multivar_joint_entropy(
+    data: npt.NDArray[np.float64], bins: int | list[int] | npt.NDArray[np.float64]
+) -> np.float64:
+    """Calculate joint entropy for n variables.
+
+    Args:
+    ----
+        data: Input array of shape [timesteps x variables].
+        bins: Number of bins or bin edges for histogram.
+
+    Returns:
+    -------
+        float: Joint entropy value H(X1,...,Xn).
+
+    """
+    hist, _ = np.histogramdd(data, bins=bins)
+    prob = hist / len(data)
+    nonzero_mask = prob > 0
+    log_p = np.zeros_like(prob)
+    log_p[nonzero_mask] = np.log(prob[nonzero_mask])
+    return -np.sum(prob * log_p)
+
+
 def conditional_entropy(
     data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64]
-):
+) -> npt.NDArray[np.float64]:
     """Calculate conditional entropy between all pairs of variables.
 
     Uses the chain rule: H(Y|X) = H(X,Y) - H(X)
@@ -126,10 +149,10 @@ def conditional_entropy(
         ValueError: If data has invalid dimensions or single variable.
 
     """
-    if data.ndim != MATRIX_DIMS:
-        raise ValueError("Need 2 time series to calculate conditional entropy")
-    if data.shape[1] < 2:  # noqa: PLR2004, need 2 variables for conditional entropy
-        raise ValueError("Need at least 2 variables to calculate conditional entropy")
+    if data.ndim < MATRIX_DIMS:
+        raise ValueError(
+            "Need more than 2 time series to calculate conditional entropy"
+        )
     h_xy = joint_entropy(data, bins)
     h_x = entropy(data, bins)
 
@@ -138,7 +161,7 @@ def conditional_entropy(
 
 def mutual_information(
     data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64], norm: bool = True
-):
+) -> npt.NDArray[np.float64]:
     """Calculate mutual information of time series.
 
     Args:
