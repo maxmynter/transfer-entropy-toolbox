@@ -199,3 +199,175 @@ def mutual_information(
         mi = np.divide(mi, np.sqrt(np.multiply(h_x[i], h_x[j])))
 
     return mi
+
+
+def prepare_te_data(
+    data: npt.NDArray[np.float64],
+    lag: int,
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+) -> tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    list[int | npt.NDArray[np.float64]],
+]:
+    """Prepare data arrays and bins for transfer entropy calculation.
+
+    Args:
+    ----
+        data: Input data array of shape [timesteps x variables].
+        lag: Time lag for analysis.
+        bins: Number of bins or bin edges for histogram.
+
+    Returns:
+    -------
+        tuple: (current data, lagged data, bin list)
+
+    Raises:
+    ------
+        ValueError: If data dimensions are invalid.
+
+    """
+    if data.ndim != MATRIX_DIMS:
+        raise ValueError("Data must be 2-dimensional [timesteps x variables]")
+
+    dim = data.shape[1]
+    bin_list = [bins] * dim if not isinstance(bins, list | np.ndarray) else bins
+    return data[lag:], data[:-lag], bin_list
+
+
+def transfer_entropy(
+    data: npt.NDArray[np.float64],
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+    lag: int,
+) -> npt.NDArray[np.float64]:
+    """Calculate transfer entropy between all pairs of variables.
+
+    Args:
+    ----
+        data: Input array of shape [timesteps x variables].
+        bins: Number of bins or bin edges for histogram.
+        lag: Time lag for analysis.
+
+    Returns:
+    -------
+        ndarray: Matrix of shape [n_variables, n_variables] containing transfer
+            entropy values. Entry [i,j] is the transfer entropy from X_j to X_i.
+
+    """
+    current, lagged, bin_list = prepare_te_data(data, lag, bins)
+    dim = data.shape[1]
+    tent = np.zeros((dim, dim))
+
+    # H(X_t-1, Y_t-1)
+    h_xy_lag = joint_entropy(lagged, bin_list)
+
+    # H(X_t-1)
+    h_x_lag = entropy(lagged, bin_list)
+
+    for i in range(dim):
+        # H(Y_t, Y_t-1)
+        h_y_ylag = joint_entropy(
+            np.column_stack([current[:, i], lagged[:, i]]), [bin_list[i], bin_list[i]]
+        )[0, 1]
+
+        for j in range(dim):
+            # H(Y_t, Y_t-1, X_t-1)
+            h_y_ylag_xlag = multivar_joint_entropy(
+                np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
+                [bin_list[i], bin_list[i], bin_list[j]],
+            )
+            tent[i, j] = h_y_ylag + h_xy_lag[i, j] - h_y_ylag_xlag - h_x_lag[i]
+
+    return tent
+
+
+def normalized_transfer_entropy(
+    data: npt.NDArray[np.float64],
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+    lag: int,
+) -> npt.NDArray[np.float64]:
+    """Calculate normalized transfer entropy between variables.
+
+    Normalized as: 1 - H(Y_t | Y_t_lag, X_t_lag) / H(Y_t | Y_t_lag)
+    where H(Y_t | Y_t_lag, X_t_lag) = H(Y_t, Y_t_lag, X_t_lag) - H(Y_t_lag, X_t_lag)
+    and H(Y_t | Y_t_lag) = H(Y_t, Y_t_lag) - H(Y_t_lag).
+
+    Args:
+    ----
+        data: Input array of shape [timesteps x variables].
+        bins: Number of bins or bin edges for histogram.
+        lag: Time lag for analysis.
+
+    Returns:
+    -------
+        ndarray: Matrix of shape [n_variables, n_variables] containing normalized
+            transfer entropy values. Entry [i,j] is between 0 and 1.
+
+    Raises:
+    ------
+        ValueError: If data dimensions are invalid.
+
+    """
+    current, lagged, bin_list = prepare_te_data(data, lag, bins)
+    dim = data.shape[1]
+    tent = np.zeros((dim, dim))
+
+    h_ylag_xlag = joint_entropy(lagged, bin_list)
+    h_ylag = entropy(lagged, bin_list)
+
+    for i in range(dim):
+        h_y_ylag = multivar_joint_entropy(
+            np.column_stack([current[:, i], lagged[:, i]]), [bin_list[i], bin_list[i]]
+        )
+        for j in range(dim):
+            h_y_ylag_xlag = multivar_joint_entropy(
+                np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
+                [bin_list[i], bin_list[i], bin_list[j]],
+            )
+            numerator = h_y_ylag_xlag - h_ylag_xlag[i, j]
+            denominator = h_y_ylag - h_ylag[i]
+            tent[i, j] = (
+                np.round(1 - numerator / denominator, 10) if denominator != 0 else 0
+            )
+    return tent
+
+
+def logn_normalized_transfer_entropy(
+    data: npt.NDArray[np.float64],
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+    lag: int,
+) -> npt.NDArray[np.float64]:
+    """Calculate transfer entropy normalized by log(N) where N is number of bins.
+
+    Args:
+    ----
+        data: Input array of shape [timesteps x variables].
+        bins: Number of bins or bin edges for histogram.
+        lag: Time lag for analysis.
+
+    Returns:
+    -------
+        ndarray: Matrix of shape [n_variables, n_variables] containing
+            logN-normalized transfer entropy values.
+
+    """
+    te = transfer_entropy(data, bins, lag)
+    if isinstance(bins, list):
+        for i in range(te.shape[0]):
+            if isinstance(bins[i], int):
+                te[i] = te[i] / np.log(bins[i])
+            elif isinstance(bins[i], np.ndarray):
+                n_bins = len(bins[i]) - 1
+                te[i] = te[i] / np.log(n_bins)
+            else:
+                raise ValueError(
+                    "Bin list must contain int of bins or np.array of bin edges"
+                )
+    elif isinstance(bins, np.ndarray):
+        te /= np.log(len(bins) - 1)
+    elif isinstance(bins, int):
+        te /= np.log(bins)
+    else:
+        raise ValueError("Bins must be int, list[np.array], or np.array.")
+
+    return te
