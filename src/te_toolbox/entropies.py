@@ -9,7 +9,7 @@ VECTOR_DIMS = 1
 
 def entropy(
     data: npt.NDArray[np.float64],
-    bins: int | list[int] | npt.NDArray[np.float64],
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64] | np.float64:
     """Calculate the entropy of one or more datasets.
 
@@ -35,8 +35,8 @@ def entropy(
         case dim if dim == VECTOR_DIMS:
             hist, _ = np.histogram(data, bins=bins)
             hist = hist / len(data)
-            hist = np.where(hist == 0, 1, hist)
-            return -np.sum(hist * np.log(hist))
+            nonzero_mask = hist > 0
+            return -np.sum(hist[nonzero_mask]*np.log(hist[nonzero_mask]))
         case dim if dim == MATRIX_DIMS:
             n_vars = data.shape[1]
             if isinstance(bins, int | float):
@@ -51,7 +51,8 @@ def entropy(
 
 
 def joint_entropy(
-    data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64]
+    data: np.ndarray,
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Calculate pairwise joint entropy between all variables in the dataset.
 
@@ -105,7 +106,8 @@ def joint_entropy(
 
 
 def multivar_joint_entropy(
-    data: npt.NDArray[np.float64], bins: int | list[int] | npt.NDArray[np.float64]
+    data: npt.NDArray[np.float64],
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
 ) -> np.float64:
     """Calculate joint entropy for n variables.
 
@@ -128,7 +130,8 @@ def multivar_joint_entropy(
 
 
 def conditional_entropy(
-    data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64]
+    data: np.ndarray,
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Calculate conditional entropy between all pairs of variables.
 
@@ -160,7 +163,9 @@ def conditional_entropy(
 
 
 def mutual_information(
-    data: np.ndarray, bins: int | list[int] | npt.NDArray[np.float64], norm: bool = True
+    data: np.ndarray,
+    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+    norm: bool = True,
 ) -> npt.NDArray[np.float64]:
     """Calculate mutual information of time series.
 
