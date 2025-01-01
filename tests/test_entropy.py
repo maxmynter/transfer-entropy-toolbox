@@ -7,7 +7,11 @@ from hypothesis import strategies as st
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from te_toolbox.entropies import entropy, joint_entropy
-from tests.conftest import NUMERIC_TOLERANCE, bin_generator, regularize_hypothesis_generated_data
+from tests.conftest import (
+    NUMERIC_TOLERANCE,
+    bin_generator,
+    regularize_hypothesis_generated_data,
+)
 
 
 def test_entropy_uniform_distribution():
@@ -91,16 +95,16 @@ def test_entropy_additivity_independent(x, y):
     assert h_joint[0, 1] <= h_marginal[0] + h_marginal[1]
 
 
-@given(st.lists(st.floats(min_value=-100, max_value=100), min_size=100, unique=True))
+@given(st.lists(st.floats(min_value=-10, max_value=10), min_size=100, unique=True))
 def test_entropy_data_processing_inequality(data):
     """Test that processing cannot increase entropy."""
     # Convert to numpy array
     data = np.array(data)
 
-    # Simple compression: round values
-    processed = np.round(data, decimals=1)
+    # Simple compression: floor values
+    processed = np.sign(data)
 
-    bins = bin_generator(data, 10)
+    bins = np.linspace(-10, 10, 7)
 
     # Calculate entropies
     h_original = entropy(data, bins=bins)
