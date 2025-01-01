@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from te_toolbox.entropies import entropy, joint_entropy
-from tests.conftest import bin_generator, regularize_hypothesis_generated_data
+from tests.conftest import NUMERIC_TOLERANCE, bin_generator, regularize_hypothesis_generated_data
 
 
 def test_entropy_uniform_distribution():
@@ -107,5 +107,5 @@ def test_entropy_data_processing_inequality(data):
     h_processed = entropy(processed, bins=bins)
 
     assert (
-        h_processed <= h_original + 1e-6
+        h_processed <= h_original + NUMERIC_TOLERANCE
     ), f"Entropy increased: original {h_original}, processed {h_processed}"

@@ -7,6 +7,7 @@ from hypothesis import strategies as st
 from numpy.testing import assert_array_almost_equal
 
 from te_toolbox.entropies import entropy, mutual_information
+from tests.conftest import NORMALIZED_CAUSAL_THRESHOLD, NUMERIC_TOLERANCE
 
 
 def test_mi_symmetric():
@@ -24,7 +25,7 @@ def test_mi_self_information(x):
     data = np.column_stack([x, x])
     mi = mutual_information(data, bins=5, norm=False)
     h = entropy(data, bins=5)
-    assert np.abs(mi[0, 1] - h[0]) < 1e-6  # noqa: PLR2004  # Floating point comparison with absolute tolerance
+    assert np.abs(mi[0, 1] - h[0]) < NUMERIC_TOLERANCE
 
 
 def test_mi_error_handling():
@@ -69,7 +70,7 @@ def test_mi_zero_for_independent(seed):
     y = rng.uniform(-100, 100, 1000)
     data = np.column_stack([x, y])
     mi = mutual_information(data, bins=10, norm=True)
-    assert mi[0, 1] < 0.1  # noqa: PLR2004 # Allow for 10% of noise induced MI.
+    assert mi[0, 1] < NORMALIZED_CAUSAL_THRESHOLD
 
 
 @given(st.integers(min_value=2, max_value=20))
@@ -78,7 +79,7 @@ def test_mi_different_bin_numbers(n_bins):
     x = np.linspace(0, 10, 100)
     data = np.column_stack([x, x])
     mi = mutual_information(data, bins=n_bins, norm=True)
-    assert 0.99 < mi[0, 1] <= 1.0 + 10e-10  # noqa: PLR2004  # Should be close to 1 for identical series
+    assert 0.99 - NUMERIC_TOLERANCE < mi[0, 1] <= 1.0 + NUMERIC_TOLERANCE
 
 
 def test_mi_noise_decreases_mi():
