@@ -36,7 +36,7 @@ def entropy(
             hist, _ = np.histogram(data, bins=bins)
             hist = hist / len(data)
             nonzero_mask = hist > 0
-            return -np.sum(hist[nonzero_mask]*np.log(hist[nonzero_mask]))
+            return -np.sum(hist[nonzero_mask] * np.log(hist[nonzero_mask]))
         case dim if dim == MATRIX_DIMS:
             n_vars = data.shape[1]
             if isinstance(bins, int | float):
