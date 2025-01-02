@@ -159,7 +159,7 @@ def conditional_entropy(
     h_xy = joint_entropy(data, bins)
     h_x = entropy(data, bins)
 
-    return h_xy - h_x.reshape(1, -1)
+    return h_xy - h_x.reshape(-1, 1)
 
 
 def mutual_information(
