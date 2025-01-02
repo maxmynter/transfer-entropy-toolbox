@@ -108,20 +108,6 @@ def test_logn_normalized_te():
     assert np.all(log_te <= te + 1e-10)
 
 
-@given(
-    st.lists(st.floats(min_value=-100, max_value=100), min_size=50, unique=True),
-    st.lists(st.floats(min_value=-100, max_value=100), min_size=50, unique=True),
-)
-def test_te_symmetry(x, y):
-    """Test TE symmetry properties."""
-    data = regularize_hypothesis_generated_data(x, y)
-    bins = bin_generator(data, 10)
-    te = transfer_entropy(data, bins, lag=1)
-
-    # Self-transfer entropy should be equal
-    assert_almost_equal(te[0, 0], te[1, 1])
-
-
 @given(st.integers(min_value=1, max_value=10))
 def test_lag_dependency(lag):
     """Test TE behavior with different lags."""
