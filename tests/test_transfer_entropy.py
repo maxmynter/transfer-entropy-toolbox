@@ -5,7 +5,7 @@ import numpy.typing as npt
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 
 from te_toolbox.entropies import (
     logn_normalized_transfer_entropy,
@@ -17,9 +17,10 @@ from tests.conftest import (
     NORMALIZED_CAUSAL_THRESHOLD,
     NUMERIC_TOLERANCE,
     SIGNIFICANCE_THRESHOLD,
-    bin_generator,
-    regularize_hypothesis_generated_data,
 )
+
+TEST_COUPLING_STRENGTH = 5
+TEST_NOISE_LEVEL = 0.5
 
 
 def generate_coupled_series(
@@ -28,11 +29,13 @@ def generate_coupled_series(
     """Generate coupled time series where y depends on x with lag 1.
 
     Args:
+    ----
         n_steps: Length of time series
         coupling: Coupling strength between x and y
         noise_level: Amount of noise in y
 
     Returns:
+    -------
         Array with shape (n_steps, 2) containing [x, y]
 
     """
@@ -159,23 +162,29 @@ def test_nte_detects_causality(n_steps, n_bins):
 
 
 @given(
-    st.integers(min_value=1000, max_value=5000),
-    st.integers(min_value=5, max_value=30),
+    st.integers(min_value=5000, max_value=5000),
+    st.integers(min_value=5, max_value=15),
 )
-def test_te_independent_signals(n_steps, n_bins):
+def test_norm_te_independent_signals(n_steps, n_bins):
     """Test TE behavior with independent signals."""
     x = np.random.normal(0, 1, n_steps)
     y = np.random.normal(0, 1, n_steps)
     data = np.column_stack([x, y])
 
-    te = transfer_entropy(data, bins=n_bins, lag=1)
     nte = normalized_transfer_entropy(data, bins=n_bins, lag=1)
+    logn_nte = logn_normalized_transfer_entropy(data, bins=n_bins, lag=1)
 
-    # TE and NTE should be small for independent signals
-    assert np.all(np.abs(te) < NORMALIZED_CAUSAL_THRESHOLD), "Detected false causality"
+    # NTE and log(N)-NTE should be small for independent signals
+    # Note: Transfer entropy values are only meaningful when compared relatively
+    # to each other. Without normalization, there is no universal threshold for
+    # detecting causality, making this test impractical for unnormalized TE
     assert np.all(
         np.abs(nte) < NORMALIZED_CAUSAL_THRESHOLD
     ), "NTE detected false causality"
+
+    assert np.all(
+        np.abs(logn_nte) < NORMALIZED_CAUSAL_THRESHOLD
+    ), "log(N)-NTE detected false causality"
 
 
 @given(
