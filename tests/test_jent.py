@@ -6,8 +6,12 @@ from hypothesis import given
 from hypothesis import strategies as st
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from te_toolbox.entropies import joint_entropy
-from tests.conftest import bin_generator
+from te_toolbox.entropies import entropy, joint_entropy
+from tests.conftest import (
+    NUMERIC_TOLERANCE,
+    bin_generator,
+    regularize_hypothesis_generated_data,
+)
 
 
 @given(
@@ -37,12 +41,41 @@ def test_jent_independent_variables():
     assert_almost_equal(result[0, 1], expected)
 
 
-def test_jent_identical_variables():
+@given(
+    st.lists(
+        st.floats(min_value=-1, max_value=1), unique=True, min_size=15, max_size=50
+    )
+)
+def test_jent_identical_variables(x):
     """Test joint entropy of identical variables: H(X,X) = H(X)."""
-    data = np.array([[1, 1], [2, 2], [3, 3]])
-    result = joint_entropy(data, bins=3)
-    # Diagonal elements should be equal to single variable entropy
-    assert_almost_equal(result[0, 0], result[1, 1])
+    data = np.array([x])
+    bins = np.linspace(np.min(x), np.max(x), 3)
+    h_x = entropy(data, bins=bins)
+    h_xx = np.diag(joint_entropy(data, bins=bins))
+    # Diagonal elements should be equal to single variable entropies
+    assert np.all(
+        np.abs(h_x - h_xx) <= NUMERIC_TOLERANCE
+    ), f"H(x) = H(x,x) but found {h_x} != {h_xx}"
+
+
+@given(
+    st.lists(
+        st.floats(min_value=-1, max_value=1), min_size=15, max_size=50, unique=True
+    ),
+    st.lists(
+        st.floats(min_value=-1, max_value=1), min_size=15, max_size=50, unique=True
+    ),
+)
+def test_jent_max_property(x, y):
+    """Test joint greater individual entropies, H(X,Y) >= max(H(X), H(Y))."""
+    data = regularize_hypothesis_generated_data(x, y)
+    bins = np.linspace(-1, 1, 3)
+
+    h_x = entropy(data[0], bins=bins)
+    h_y = entropy(data[1], bins=bins)
+    h_xy = joint_entropy(data, bins=bins)[0, 1]
+
+    assert h_xy >= max(h_x, h_y) - NUMERIC_TOLERANCE
 
 
 def test_jent_different_bin_specs():
