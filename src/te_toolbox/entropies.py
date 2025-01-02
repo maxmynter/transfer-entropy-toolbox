@@ -88,11 +88,6 @@ def joint_entropy(
     idxs, jdxs = np.triu_indices(dim)
     for idx in range(len(idxs)):
         i, j = idxs[idx], jdxs[idx]
-        if isinstance(bins, list | np.ndarray) and (
-            (hasattr(bins, "ndim") and bins.ndim > 1)
-            or isinstance(bins[0], list | np.ndarray)
-        ):
-            bins = [np.asarray(bins[i]).flatten(), bins[j].flatten()]
         hist, _, _ = np.histogram2d(data[:, i], data[:, j], bins=bins)
         p_xy = hist / length
         nonzero_mask = p_xy > 0
@@ -114,14 +109,16 @@ def multivar_joint_entropy(
     Args:
     ----
         data: Input array of shape [timesteps x variables].
-        bins: Number of bins or bin edges for histogram.
+        bins: Number of bins for all, for each, or list of bin edges for histogram.
 
     Returns:
     -------
         float: Joint entropy value H(X1,...,Xn).
 
     """
-    hist, _ = np.histogramdd(data, bins=bins)
+    hist, _ = np.histogramdd(
+        data, bins=[bins] * data.shape[1] if isinstance(bins, np.ndarray) else bins
+    )
     prob = hist / len(data)
     nonzero_mask = prob > 0
     log_p = np.zeros_like(prob)
@@ -216,7 +213,8 @@ def prepare_te_data(
     ----
         data: Input data array of shape [timesteps x variables].
         lag: Time lag for analysis.
-        bins: Number of bins or bin edges for histogram.
+        bins: Number of bins (int), bin edges, or list of per variable bin
+              edges for histogram.
 
     Returns:
     -------
@@ -229,10 +227,17 @@ def prepare_te_data(
     """
     if data.ndim != MATRIX_DIMS:
         raise ValueError("Data must be 2-dimensional [timesteps x variables]")
+    if isinstance(bins, list) and len(bins) != data.shape[1]:
+        raise ValueError(
+            f"Bin specifications ({len(bins)}) must match variables ({data.shape[1]}). "
+            "Provide either: a single integer for uniform bins, "
+            "a list of integers for variable-specific bin counts, "
+            "or a list of arrays defining bin edges for each variable."
+        )
 
     dim = data.shape[1]
-    bin_list = [bins] * dim if not isinstance(bins, list | np.ndarray) else bins
-    return data[lag:], data[:-lag], bin_list
+    bins = [bins] * dim if isinstance(bins, int) else bins
+    return data[lag:], data[:-lag], bins
 
 
 def transfer_entropy(
@@ -254,27 +259,28 @@ def transfer_entropy(
             entropy values. Entry [i,j] is the transfer entropy from X_j to X_i.
 
     """
-    current, lagged, bin_list = prepare_te_data(data, lag, bins)
+    current, lagged, bins = prepare_te_data(data, lag, bins)
     dim = data.shape[1]
     tent = np.zeros((dim, dim))
 
     # H(X_t-1, Y_t-1)
-    h_xy_lag = joint_entropy(lagged, bin_list)
+    h_xy_lag = joint_entropy(lagged, bins)
 
     # H(X_t-1)
-    h_x_lag = entropy(lagged, bin_list)
+    h_x_lag = entropy(lagged, bins)
 
     for i in range(dim):
         # H(Y_t, Y_t-1)
         h_y_ylag = joint_entropy(
-            np.column_stack([current[:, i], lagged[:, i]]), [bin_list[i], bin_list[i]]
+            np.column_stack([current[:, i], lagged[:, i]]),
+            ([bins[i], bins[i]] if isinstance(bins, list) else bins),
         )[0, 1]
 
         for j in range(dim):
             # H(Y_t, Y_t-1, X_t-1)
             h_y_ylag_xlag = multivar_joint_entropy(
                 np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
-                [bin_list[i], bin_list[i], bin_list[j]],
+                ([bins[i], bins[i], bins[j]] if isinstance(bins, list) else bins),
             )
             tent[i, j] = h_y_ylag + h_xy_lag[i, j] - h_y_ylag_xlag - h_x_lag[i]
 
@@ -308,21 +314,22 @@ def normalized_transfer_entropy(
         ValueError: If data dimensions are invalid.
 
     """
-    current, lagged, bin_list = prepare_te_data(data, lag, bins)
+    current, lagged, bins = prepare_te_data(data, lag, bins)
     dim = data.shape[1]
     tent = np.zeros((dim, dim))
 
-    h_ylag_xlag = joint_entropy(lagged, bin_list)
-    h_ylag = entropy(lagged, bin_list)
+    h_ylag_xlag = joint_entropy(lagged, bins)
+    h_ylag = entropy(lagged, bins)
 
     for i in range(dim):
         h_y_ylag = multivar_joint_entropy(
-            np.column_stack([current[:, i], lagged[:, i]]), [bin_list[i], bin_list[i]]
+            np.column_stack([current[:, i], lagged[:, i]]),
+            ([bins[i], bins[i]] if isinstance(bins, list) else bins),
         )
         for j in range(dim):
             h_y_ylag_xlag = multivar_joint_entropy(
                 np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
-                [bin_list[i], bin_list[i], bin_list[j]],
+                ([bins[i], bins[i], bins[j]] if isinstance(bins, list) else bins),
             )
             numerator = h_y_ylag_xlag - h_ylag_xlag[i, j]
             denominator = h_y_ylag - h_ylag[i]
