@@ -18,8 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "hypothesis"]
-dev = ["ruff"]
+dev = ["pytest", "pytest-cov", "hypothesis", "ruff"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -34,5 +33,5 @@ show-fixes = true
 select = ["E", "F", "I", "B", "W", "C90", "N", "D", "UP", "PL", "RUF", "C4", "SIM", "TCH"]
 ignore = ["D203", "D211", "D212", "D213"]
 
-[tool.hatch.build.targets.wheel]
+[tool.hatch.build]
 packages = ["src/te_toolbox"]
