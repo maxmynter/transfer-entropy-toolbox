@@ -39,7 +39,7 @@ def entropy(
             return -np.sum(hist[nonzero_mask] * np.log(hist[nonzero_mask]))
         case dim if dim == MATRIX_DIMS:
             n_vars = data.shape[1]
-            if isinstance(bins, int | float):
+            if isinstance(bins, int | float | np.ndarray):
                 bins = [bins] * n_vars
             return np.array([entropy(data[:, i], bins[i]) for i in range(n_vars)])
         case _:
