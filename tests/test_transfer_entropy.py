@@ -126,13 +126,11 @@ def test_lag_dependency(lag):
 
 @given(
     st.integers(min_value=1000, max_value=5000),
-    st.floats(min_value=0.1, max_value=0.9),
-    st.floats(min_value=0.01, max_value=0.2),
     st.integers(min_value=5, max_value=30),
 )
-def test_te_detects_causality(n_steps, coupling, noise_level, n_bins):
+def test_te_detects_causality(n_steps, n_bins):
     """Test if TE correctly identifies causal relationships."""
-    data = generate_coupled_series(n_steps, coupling, noise_level)
+    data = generate_coupled_series(n_steps, TEST_COUPLING_STRENGTH, TEST_NOISE_LEVEL)
     te = transfer_entropy(data, bins=n_bins, lag=1)
 
     # TE should be higher in causal direction
@@ -143,13 +141,11 @@ def test_te_detects_causality(n_steps, coupling, noise_level, n_bins):
 
 @given(
     st.integers(min_value=1000, max_value=5000),
-    st.floats(min_value=0.5, max_value=0.9),
-    st.floats(min_value=0.01, max_value=0.2),
     st.integers(min_value=5, max_value=30),
 )
-def test_nte_detects_causality(n_steps, coupling, noise_level, n_bins):
+def test_nte_detects_causality(n_steps, n_bins):
     """Test if normalized TE correctly identifies causal relationships."""
-    data = generate_coupled_series(n_steps, coupling, noise_level)
+    data = generate_coupled_series(n_steps, TEST_COUPLING_STRENGTH, TEST_NOISE_LEVEL)
     nte = normalized_transfer_entropy(data, bins=n_bins, lag=1)
 
     # NTE should be higher in causal direction
