@@ -19,16 +19,20 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff"]
+legacy-tests = ["scipy", "scikit-learn"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = [".", "src"]
+markers = ["legacy: tests that check legacy implementation consistency"]
+addopts = "-m 'not legacy'"
 
 [tool.ruff]
 line-length = 88
 indent-width = 4
 target-version = "py310"
 show-fixes = true
-exclude = ["analysis/check_consistency/thesis_package.py"]
+exclude = ["tests/legacy_implementation/thesis_package.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "W", "C90", "N", "D", "UP", "PL", "RUF", "C4", "SIM", "TCH"]
