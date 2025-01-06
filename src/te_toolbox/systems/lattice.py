@@ -33,6 +33,11 @@ class CMLConfig:
         """Get name of the map function."""
         return self.map_function.__class__.__name__
 
+    def __post_init__(self):
+        """Post-initialization checks."""
+        if not (0 <= self.coupling_strength <= 1):
+            raise ValueError("Coupling strength must be between 0 and 1.")
+
 
 class CoupledMapLattice:
     """Implementation of a Coupled Map Lattice system."""
@@ -55,6 +60,9 @@ class CoupledMapLattice:
             Array of shape (time_steps, n_maps) containing the time series
 
         """
+        if not 0 <= self.config.coupling_strength <= 1:
+            raise ValueError("Coupling strength must be between 0 and 1.")
+
         # Initialize with random values
         current_state = self._rng.random(size=self.config.n_maps)
 
