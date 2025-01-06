@@ -15,11 +15,11 @@ def sample_data():
 def lyapunov_exponent(map_func, x0, n_iter=1000):
     """Approximate the Lyapunov exponent for a map."""
     x = x0
-    exponent_sum = 0.0
+    exponent_sum = np.zeros_like(x)
     for _ in range(n_iter):
         derivative = map_func.derivative(x)
         exponent_sum += np.log(abs(derivative))
-        x = map_func(np.array([x]))  # Iterate map
+        x = map_func(x)
     return exponent_sum / n_iter
 
 
@@ -39,7 +39,7 @@ def test_tent_map(sample_data):
     assert np.all(result >= 0) and np.all(result <= 1)
 
     # Test Lyapunov exponent (positive for chaotic behavior)
-    lyapunov = lyapunov_exponent(tent, 0.1)
+    lyapunov = lyapunov_exponent(tent, np.array([0.1]))
     assert lyapunov > 0  # Lyapunov exponent should be positive for chaos
 
     # Test fixed points for tent map
@@ -63,7 +63,7 @@ def test_logistic_map(sample_data):
     assert np.all(result >= 0) and np.all(result <= 1)
 
     # Test Lyapunov exponent (positive for chaotic behavior)
-    lyapunov = lyapunov_exponent(logistic, 0.1)
+    lyapunov = lyapunov_exponent(logistic, np.array([0.1]))
     assert lyapunov > 0  # Lyapunov exponent should be positive for chaos
 
     # Test fixed points for logistic map
@@ -85,7 +85,7 @@ def test_bellows_map(sample_data):
     assert np.isclose(bellows(fixed_point), fixed_point)
 
     # Test Lyapunov exponent (positive for chaotic behavior)
-    lyapunov = lyapunov_exponent(bellows, 0.1)
+    lyapunov = lyapunov_exponent(bellows, np.array([0.1]))
     assert lyapunov > 0  # Lyapunov exponent should be positive for chaos
 
 
@@ -105,7 +105,7 @@ def test_exponential_map(sample_data):
     assert np.isclose(exp_map(np.array([1.0])), 1.0)
 
     # Test Lyapunov exponent (positive for chaotic behavior)
-    lyapunov = lyapunov_exponent(exp_map, 0.1)
+    lyapunov = lyapunov_exponent(exp_map, np.array([0.1]))
     assert lyapunov > 0  # Lyapunov exponent should be positive for chaos
 
     # Test fixed points for exponential map
