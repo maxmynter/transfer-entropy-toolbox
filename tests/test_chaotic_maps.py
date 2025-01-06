@@ -117,7 +117,7 @@ def test_exponential_map(sample_data):
 @pytest.mark.parametrize(
     "map_class,params",
     [
-        (TentMap, {}),
+        (TentMap, {"r": 2.0}),
         (LogisticMap, {"r": 4.0}),
         (BellowsMap, {"r": 2.0, "b": 6.0}),
         (ExponentialMap, {"r": 4.0}),
