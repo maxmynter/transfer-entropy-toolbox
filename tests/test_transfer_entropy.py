@@ -204,3 +204,29 @@ def test_log_normalized_te(n_steps, coupling, noise_level, n_bins):
     assert np.all(log_te <= te + 1e-10)
     # Should preserve directionality
     assert log_te[1, 0] > log_te[0, 1], "Log-normalized TE failed to detect causality"
+
+
+@pytest.mark.parametrize(
+    "bins,expected_shape",
+    [
+        ([10, 10], (2, 2)),
+        (7, (2, 2)),
+        ([np.linspace(-3, 3, 11), np.linspace(-3, 3, 11)], (2, 2)),
+        ([10, np.linspace(-3, 3, 11)], (2, 2)),
+    ],
+)
+def test_logn_te_list_bins(bins, expected_shape):
+    """Test logN normalized TE with list of bin specifications."""
+    data = generate_coupled_series(1000, 0.5, 0.1)
+    result = logn_normalized_transfer_entropy(data, bins=bins, lag=1)
+    assert result.shape == expected_shape
+    assert np.all(result >= 0)
+
+
+def test_logn_te_invalid_bins():
+    """Test logN normalized TE raises error for invalid bins."""
+    data = generate_coupled_series(1000, 0.5, 0.1)
+
+    invalid_bins = "not_valid"
+    with pytest.raises(ValueError, match="Bins must be int, list"):
+        logn_normalized_transfer_entropy(data, bins=invalid_bins, lag=1)
