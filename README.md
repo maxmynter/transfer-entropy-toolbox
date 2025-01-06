@@ -7,7 +7,7 @@ A paper from my M.Sc. thesis about the problems of Transfer Entropy from discret
 ### Installation
 Clone the repository and install in development mode with:
 ```bash
-git clone https://github.com/yourusername/te-toolbox.git
+git clone https://github.com/maxmynte/msc-paper.git
 cd te-toolbox
 pip install -e ".[dev]"
 ```
