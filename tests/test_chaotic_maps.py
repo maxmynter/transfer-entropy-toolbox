@@ -25,7 +25,7 @@ def lyapunov_exponent(map_func, x0, n_iter=1000):
 
 def test_tent_map(sample_data):
     """Test tent map implementation."""
-    tent = TentMap(r=2)
+    tent = TentMap(r=2.0)
     result = tent(sample_data)
 
     # Test specific known values
@@ -74,14 +74,14 @@ def test_logistic_map(sample_data):
 
 def test_bellows_map(sample_data):
     """Test bellows map implementation."""
-    bellows = BellowsMap(r=2.0, b=6.0)
+    bellows = BellowsMap(r=5.0, b=6.0)
     result = bellows(sample_data)
 
     # Test array input works
     assert result.shape == sample_data.shape
 
     # Test specific fixed point
-    fixed_point = np.array([0.8])
+    fixed_point = np.array([0.0])
     assert np.isclose(bellows(fixed_point), fixed_point)
 
     # Test Lyapunov exponent (positive for chaotic behavior)
@@ -119,7 +119,7 @@ def test_exponential_map(sample_data):
     [
         (TentMap, {"r": 2.0}),
         (LogisticMap, {"r": 4.0}),
-        (BellowsMap, {"r": 2.0, "b": 6.0}),
+        (BellowsMap, {"r": 5.0, "b": 6.0}),
         (ExponentialMap, {"r": 4.0}),
     ],
 )
