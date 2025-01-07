@@ -187,15 +187,10 @@ class CoupledMapLatticeGenerator:
             Next state
 
         """
-        # Calculate the coupled term
-        coupled_term = np.zeros_like(state)
-        for i in range(len(state)):
-            # Periodic boundary conditions
-            left = state[i - 1] if i > 0 else state[-1]
-            coupled_term[i] = (
-                self.config.coupling_strength * left
-                + (1 - self.config.coupling_strength) * state[i]
-            )
+        left_neighbors = np.roll(state, 1)
+        coupled_term = (
+            self.config.coupling_strength * left_neighbors
+            + (1 - self.config.coupling_strength) * state
+        )
 
-        # Apply the map function
         return self.config.map_function(coupled_term)
