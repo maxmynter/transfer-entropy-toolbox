@@ -101,6 +101,33 @@ def test_generator_coupling(basic_config):
     assert not np.array_equal(lattice_uncoupled.lattice, lattice_coupled.lattice)
 
 
+def test_identity_rotation(basic_config):
+    """Test that with identity map and full coupling, values purely rotate."""
+    # Configure for pure rotation:
+    # - Identity map (no transformation of values)
+    # - Full coupling (coupling_strength = 1.0)
+    rotation_config = CMLConfig(
+        map_function=lambda x: x,
+        n_maps=4,
+        coupling_strength=1.0,  # Full coupling from left
+        n_steps=5,
+        warmup_steps=0,
+        seed=42,
+        output_dir=basic_config.output_dir,
+    )
+
+    generator = CoupledMapLatticeGenerator(rotation_config)
+    cml = generator.generate()
+
+    for step in range(1, rotation_config.n_steps):
+        expected = np.roll(cml.lattice[step - 1], 1)  # Roll previous state left by 1
+        np.testing.assert_array_almost_equal(
+            cml.lattice[step],
+            expected,
+            err_msg=f"Step {step} does not match expected rotation",
+        )
+
+
 @pytest.mark.parametrize("coupling", [-0.1, 1.1])
 def test_invalid_coupling(basic_config, coupling):
     """Test invalid coupling values."""
