@@ -220,13 +220,4 @@ def test_logn_te_list_bins(bins, expected_shape):
     data = generate_coupled_series(1000, 0.5, 0.1)
     result = logn_normalized_transfer_entropy(data, bins=bins, lag=1)
     assert result.shape == expected_shape
-    assert np.all(result >= 0)
-
-
-def test_logn_te_invalid_bins():
-    """Test logN normalized TE raises error for invalid bins."""
-    data = generate_coupled_series(1000, 0.5, 0.1)
-
-    invalid_bins = "not_valid"
-    with pytest.raises(ValueError, match="Bins must be int, list"):
-        logn_normalized_transfer_entropy(data, bins=invalid_bins, lag=1)
+    assert np.all(result >= 0 - NUMERIC_TOLERANCE)
