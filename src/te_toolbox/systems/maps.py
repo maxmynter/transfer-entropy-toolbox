@@ -35,6 +35,11 @@ class Map(ABC):
         """
         pass
 
+    @abstractmethod
+    def __repr__(self) -> str:
+        """Override the representation to contain reproducibility information."""
+        pass
+
 
 class TentMap(Map):
     """Tent map: f(x) = 2x if x < 0.5 else 2(1-x)."""
@@ -65,6 +70,10 @@ class TentMap(Map):
         """Compute the derivative of the Tent map."""
         return np.where(x < 0.5, self.r, -self.r)  # noqa: PLR2004 # Implementation of tent map
 
+    def __repr__(self) -> str:
+        """Representat Tent Map with parameter."""
+        return f"TentMap(r={self.r})"
+
 
 class LogisticMap(Map):
     """Logistic map: f(x) = rx(1-x)."""
@@ -93,6 +102,10 @@ class LogisticMap(Map):
     def derivative(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Compute the derivative of the Logistic map."""
         return self.r * (1 - 2 * x)
+
+    def __repr__(self) -> str:
+        """Represent Logistic Map with parameter."""
+        return f"LogisticMap(r={self.r})"
 
 
 class BellowsMap(Map):
@@ -125,6 +138,10 @@ class BellowsMap(Map):
         """Compute the derivative of the Bellows map."""
         return self.r * ((self.b - 1) * x**self.b + 1) / (1 - x**self.b) ** 2
 
+    def __repr__(self) -> str:
+        """Represent Bellows map with parameter."""
+        return f"BellowsMap(r={self.r},b={self.b})"
+
 
 class ExponentialMap(Map):
     """Implementation of the exponential map: f(x) = (exp(rx) - 1)/(exp(r) - 1)."""
@@ -153,3 +170,7 @@ class ExponentialMap(Map):
     def derivative(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Compute the derivative of the Exponential map."""
         return np.exp(self.r * (1 - x)) * (1 - self.r * x)
+
+    def __repr__(self) -> str:
+        """Represent Exponential Map with parameter."""
+        return f"ExponentialMap(r={self.r})"
