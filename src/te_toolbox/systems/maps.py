@@ -42,7 +42,7 @@ class Map(ABC):
 
 
 class TentMap(Map):
-    """Tent map: f(x) = 2x if x < 0.5 else 2(1-x)."""
+    """Tent map: f(x) = rx if x < 0.5 else r(1-x)."""
 
     def __init__(self, r: float):
         """Initialize tent map.
@@ -97,7 +97,7 @@ class LogisticMap(Map):
             Logistic map result
 
         """
-        return self.r * x * (1 - x)
+        return self.r * np.multiply(x, 1 - x)
 
     def derivative(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Compute the derivative of the Logistic map."""
@@ -132,7 +132,8 @@ class BellowsMap(Map):
             Bellows map result
 
         """
-        return (self.r * x) / (1 - x**self.b)
+        x_pow_b = x**self.b
+        return self.r * np.divide(x, (1 - x_pow_b))
 
     def derivative(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Compute the derivative of the Bellows map."""
@@ -144,7 +145,7 @@ class BellowsMap(Map):
 
 
 class ExponentialMap(Map):
-    """Implementation of the exponential map: f(x) = (exp(rx) - 1)/(exp(r) - 1)."""
+    """Implementation of the exponential map: f(x) = x*exp(r*(1-x))."""
 
     def __init__(self, r: float = 4.0):
         """Initialize exponential map.
