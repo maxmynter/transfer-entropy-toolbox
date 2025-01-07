@@ -91,14 +91,16 @@ def test_bellows_map(sample_data):
 
 def test_exponential_map(sample_data):
     """Test exponential map implementation."""
-    exp_map = ExponentialMap(r=4.0)
+    exp_map_r = 4.0
+    exp_map = ExponentialMap(r=exp_map_r)
     result = exp_map(sample_data)
 
     # Test array input works
     assert result.shape == sample_data.shape
 
-    # Test normalization (output should be in [0,1])
-    assert np.all(result >= 0) and np.all(result <= 1)
+    # Test normalization (output should be in [0,1/r])
+    max_exponential_map = 1 / exp_map_r * np.exp(exp_map_r * (1 - 1 / exp_map_r))
+    assert np.all(result >= 0) and np.all(result <= max_exponential_map)
 
     # Test endpoints
     assert np.isclose(exp_map(np.array([0.0])), 0.0)

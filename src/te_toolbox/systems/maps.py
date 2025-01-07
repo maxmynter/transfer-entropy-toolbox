@@ -166,7 +166,7 @@ class ExponentialMap(Map):
             Exponential map result
 
         """
-        return (np.exp(self.r * x) - 1) / (np.exp(self.r) - 1)
+        return np.multiply(x, np.exp(self.r * (1 - x)))
 
     def derivative(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Compute the derivative of the Exponential map."""
