@@ -72,7 +72,7 @@ class CoupledMapLattice:
     def default_filename(self) -> Path:
         """Generate default filename containing the generation parameters."""
         filename = (
-            f"cml_map={self.map_name}_x_{self.n_maps}_"
+            f"cml_map={self.map_name}_{self.n_maps}_x_{self.n_steps}"
             f"eps={self.coupling_strength}_seed={self.seed or 'noseed'}.npz"
         )
         if self.output_dir:
