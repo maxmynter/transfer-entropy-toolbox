@@ -23,14 +23,52 @@ def lyapunov_exponent(map_func, x0, n_iter=1000):
     return exponent_sum / n_iter
 
 
+def test_tent_map_known_values():
+    """Test known values of the Tent Map."""
+    tent = TentMap(r=2.0)
+
+    assert np.isclose(tent(np.array([0.25])), 0.5)
+    assert np.isclose(tent(np.array([0.20])), 0.4)
+    assert np.isclose(tent(np.array([0.10])), 0.2)
+    assert np.isclose(tent(np.array([0.55])), 0.9)
+    assert np.isclose(tent(np.array([0.90])), 0.2)
+    assert np.isclose(tent(np.array([0.75])), 0.5)
+
+
+def test_logistic_map_known_values():
+    """Test known values of the Logistic Map."""
+    logistic = LogisticMap(r=4.0)
+
+    assert np.isclose(logistic(np.array([0.25])), 0.75)
+    assert np.isclose(logistic(np.array([0.55])), 0.99)
+    assert np.isclose(logistic(np.array([0.75])), 0.75)
+    assert np.isclose(logistic(np.array([0.90])), 0.36)
+
+
+def test_bellows_map_known_values():
+    """Test known values of the Bellows Map."""
+    bellows = BellowsMap(r=5.0, b=6.0)
+
+    assert np.isclose(bellows(np.array([0.50])), 2.53968)
+    assert np.isclose(bellows(np.array([0.25])), 1.25031)
+    assert np.isclose(bellows(np.array([0.75])), 4.56192)
+    assert np.isclose(bellows(np.array([0.90])), 9.60391)
+
+
+def test_exponential_map_known_values():
+    """Test known values of the Exponential Map."""
+    exponential = ExponentialMap(r=2.0)
+
+    assert np.isclose(exponential(np.array([0.25])), 1.12042)
+    assert np.isclose(exponential(np.array([0.50])), 1.35914)
+    assert np.isclose(exponential(np.array([0.90])), 1.09926)
+    assert np.isclose(exponential(np.array([0.75])), 1.23654)
+
+
 def test_tent_map(sample_data):
     """Test tent map implementation."""
     tent = TentMap(r=2.0)
     result = tent(sample_data)
-
-    # Test specific known values
-    assert np.isclose(tent(np.array([0.25])), 0.5)  # Below 0.5
-    assert np.isclose(tent(np.array([0.75])), 0.5)  # Above 0.5
 
     # Test array input works
     assert result.shape == sample_data.shape
