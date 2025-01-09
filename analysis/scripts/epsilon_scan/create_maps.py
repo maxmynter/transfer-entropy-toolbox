@@ -1,8 +1,6 @@
 """Script to generate CML data for various maps and coupling strengths."""
 
-from pathlib import Path
-
-import numpy as np
+from eps_scan_constants import EPSILONS, N_ITER, N_MAPS, N_TRANSIENT, OUTPUT_DIR, SEED
 
 from te_toolbox.systems.lattice import CMLConfig, CoupledMapLatticeGenerator
 from te_toolbox.systems.maps import (
@@ -12,15 +10,6 @@ from te_toolbox.systems.maps import (
     Map,
     TentMap,
 )
-
-OUTPUT_DIR = Path("data/")
-SEED = 42
-N_TRANSIENT = 10**4
-N_MAPS = 100
-N_ITER = 300
-LAG = 1
-EPSILONS = np.linspace(0, 1, 20)
-N_BINS = np.arange(2, 31)
 
 
 def create_cml(map_function: Map) -> None:
