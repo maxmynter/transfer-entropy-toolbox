@@ -1,10 +1,33 @@
 """Contains all the entropy and derived measures."""
 
+from functools import cache
+
 import numpy as np
 import numpy.typing as npt
 
 MATRIX_DIMS = 2
 VECTOR_DIMS = 1
+
+
+@cache
+def _discretize_data(
+    data: tuple[float], bins: int | tuple[float, ...]
+) -> tuple[npt.NDArray[np.int64], int]:
+    """Convert dataset into discrete classes."""
+    data_array = np.array(data)
+    if isinstance(bins, int):
+        edges = np.linspace(data_array.min(), data_array.max(), bins + 1)
+    else:
+        edges = bins
+    indices = np.digitize(data_array, edges, right=True)
+    return indices, len(edges) - 1
+
+
+def discrete_entropy(classes: npt.NDArray[np.int64], n_classes: int) -> np.float64:
+    """Calculate the discrete entropy from class assignments."""
+    probs = np.bincount(classes, minlength=n_classes) / len(classes)
+    nonzero_mask = probs > 0
+    return -np.sum(probs[nonzero_mask] * np.log(probs[nonzero_mask]))
 
 
 def entropy(
@@ -33,10 +56,9 @@ def entropy(
 
     match data.ndim:
         case dim if dim == VECTOR_DIMS:
-            hist, _ = np.histogram(data, bins=bins)
-            hist = hist / len(data)
-            nonzero_mask = hist > 0
-            return -np.sum(hist[nonzero_mask] * np.log(hist[nonzero_mask]))
+            hashable_bins = bins if isinstance(bins, int) else tuple(bins)
+            indices, n_bins = _discretize_data(tuple(data), hashable_bins)
+            return discrete_entropy(indices, n_bins)
         case dim if dim == MATRIX_DIMS:
             n_vars = data.shape[1]
             if isinstance(bins, int | float | np.ndarray):
