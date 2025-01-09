@@ -84,6 +84,21 @@ def entropy(
             )
 
 
+def discrete_joint_entropy(
+    classes1: npt.NDArray[np.int64],
+    classes2: npt.NDArray[np.int64],
+    n_classes1: int,
+    n_classes2: int,
+) -> np.float64:
+    """Calculate the discrete joint entropy from class assignments."""
+    hist = np.zeros((n_classes1, n_classes2))
+
+    np.add.at(hist, (classes1, classes2), 1)
+    p_xy = hist / len(classes1)
+    nonzero_mask = p_xy > 0
+    return -np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask]))
+
+
 def joint_entropy(
     data: np.ndarray,
     bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
@@ -116,19 +131,22 @@ def joint_entropy(
     if dim < 2:  # noqa: PLR2004, 2 dimensions necessary for jent calculation
         raise ValueError("Need at least 2 variables to calculate joint entropy")
 
-    length = data.shape[0]  # Number of timesteps
     jent = np.zeros((dim, dim), dtype=np.float64)
+
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * dim
 
     idxs, jdxs = np.triu_indices(dim)
     for idx in range(len(idxs)):
         i, j = idxs[idx], jdxs[idx]
-        hist, _, _ = np.histogram2d(data[:, i], data[:, j], bins=bins)
-        p_xy = hist / length
-        nonzero_mask = p_xy > 0
-        log_p = np.zeros_like(p_xy)
-        log_p[nonzero_mask] = np.log(p_xy[nonzero_mask])
+        hashable_bins_i = bins[i] if isinstance(bins[i], int) else tuple(bins[i])
+        hashable_bins_j = bins[j] if isinstance(bins[j], int) else tuple(bins[j])
 
-        entropy_value = -np.sum(p_xy * log_p)
+        indices_i, n_bins_i = _discretize_data(tuple(data[:, i]), hashable_bins_i)
+        indices_j, n_bins_j = _discretize_data(tuple(data[:, j]), hashable_bins_j)
+
+        entropy_value = discrete_joint_entropy(indices_i, indices_j, n_bins_i, n_bins_j)
+
         jent[i, j] = entropy_value
         jent[j, i] = entropy_value
     return jent
