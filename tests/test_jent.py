@@ -14,6 +14,28 @@ from tests.conftest import (
 )
 
 
+def test_jent_known_distribution():
+    """Test joint entropy with a known joint probability distribution.
+
+    Create a joint distribution where:
+    P(X=0,Y=0) = 0.25  P(X=0,Y=1) = 0.25
+    P(X=1,Y=0) = 0.25  P(X=1,Y=1) = 0.25
+
+    This gives us maximum joint entropy for 2 binary variables:
+    H(X,Y) = -sum(p(x,y) * log(p(x,y))) = -4 * (0.25 * log(0.25)) = 2*log(2)
+    """
+    x = np.array([0, 0, 1, 1])
+    y = np.array([0, 1, 0, 1])
+    data = np.column_stack([x, y])
+
+    result = joint_entropy(data, bins=2)
+
+    # Expected: maximum joint entropy for 2 binary variables
+    expected = 2 * np.log(2)  # = -4 * (0.25 * log(0.25))
+
+    assert_almost_equal(result[0, 1], expected)
+
+
 @given(
     st.lists(
         st.lists(st.floats(min_value=-1000, max_value=1000), min_size=2, max_size=2),
