@@ -13,13 +13,25 @@ VECTOR_DIMS = 1
 def _discretize_data(
     data: tuple[float], bins: int | tuple[float, ...]
 ) -> tuple[npt.NDArray[np.int64], int]:
-    """Convert dataset into discrete classes."""
+    """Convert dataset into discrete classes.
+
+    Note: Values equal to outer bin edges handling:
+    - Values equal to leftmost edge go into first bin
+    - Values equal to rightmost edge go into last bin
+    """
     data_array = np.array(data)
     if isinstance(bins, int):
         edges = np.linspace(data_array.min(), data_array.max(), bins + 1)
     else:
         edges = bins
-    indices = np.digitize(data_array, edges, right=True)
+
+    # Subtract 1 as digitize is 1 indexed
+    indices = np.digitize(data_array, edges, right=False) - 1
+
+    n_bins = len(edges) - 1
+
+    # Make rightmost bin edge inclusive
+    indices = np.where(indices == n_bins, n_bins - 1, indices)
     return indices, len(edges) - 1
 
 
