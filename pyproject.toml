@@ -20,6 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff"]
 legacy-tests = ["scipy", "scikit-learn"]
+analysis=["seaborn"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
