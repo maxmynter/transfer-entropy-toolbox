@@ -152,6 +152,21 @@ def joint_entropy(
     return jent
 
 
+def discrete_multivar_joint_entropy(
+    classes: list[npt.NDArray[np.int64]],
+    n_classes: list[int],
+) -> np.float64:
+    """Calculate joint entropy from discrete classes for multiple variables."""
+    hist = np.zeros(n_classes)
+
+    idx = tuple(c for c in classes)
+    np.add.at(hist, idx, 1)
+
+    p = hist / len(classes[0])
+    nonzero_mask = p > 0
+    return -np.sum(p[nonzero_mask] * np.log(p[nonzero_mask]))
+
+
 def multivar_joint_entropy(
     data: npt.NDArray[np.float64],
     bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
@@ -168,14 +183,15 @@ def multivar_joint_entropy(
         float: Joint entropy value H(X1,...,Xn).
 
     """
-    hist, _ = np.histogramdd(
-        data, bins=[bins] * data.shape[1] if isinstance(bins, np.ndarray) else bins
-    )
-    prob = hist / len(data)
-    nonzero_mask = prob > 0
-    log_p = np.zeros_like(prob)
-    log_p[nonzero_mask] = np.log(prob[nonzero_mask])
-    return -np.sum(prob * log_p)
+    classes = []
+    n_classes = []
+    for i in range(data.shape[1]):
+        cur_bins = bins[i] if isinstance(bins, list) else bins
+        indices, n_bins = _discretize_data(tuple(data[:, i]), cur_bins)
+        classes.append(indices)
+        n_classes.append(n_bins)
+
+    return discrete_multivar_joint_entropy(classes, n_classes)
 
 
 def conditional_entropy(
