@@ -22,6 +22,21 @@ def test_entropy_uniform_distribution():
     assert_almost_equal(result, expected)
 
 
+def test_entropy_known_distribution():
+    """Test entropy calculation with a known probability distribution.
+
+    Using a distribution with P(X=0) = 0.75 and P(X=1) = 0.25
+    H(X) = -0.75*log(0.75) - 0.25*log(0.25)
+    """
+    data = np.array([0, 0, 0, 1])  # p(0)=0.75, p(1)=0.25
+    result = entropy(data, bins=2)
+
+    p = np.array([0.75, 0.25])
+    expected = -np.sum(p * np.log(p))
+
+    assert_almost_equal(result, expected)
+
+
 def test_entropy_deterministic_distribution():
     """Test entropy calculation for deterministic distribution."""
     # All same values should have zero entropy
