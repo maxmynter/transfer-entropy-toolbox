@@ -446,29 +446,66 @@ def normalized_transfer_entropy(
         ValueError: If data dimensions are invalid.
 
     """
-    current, lagged, bins = prepare_te_data(data, lag, bins)
-    dim = data.shape[1]
-    tent = np.zeros((dim, dim))
+    n_steps, n_vars = data.shape
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * n_vars
 
-    h_ylag_xlag = joint_entropy(lagged, bins)
-    h_ylag = entropy(lagged, bins)
+    data_tuple = tuple(tuple(data[:, i]) for i in range(n_vars))
+    bins_tuple = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
 
-    for i in range(dim):
-        h_y_ylag = multivar_joint_entropy(
+    discretized = _discretize_nd_data(data_tuple, bins_tuple)
+    indices = np.column_stack([d[0] for d in discretized])
+    n_classes = [d[1] for d in discretized]
+
+    return discrete_normalized_transfer_entropy(indices, n_classes, lag)
+
+
+def discrete_normalized_transfer_entropy(
+    classes: npt.NDArray[np.int64], n_classes: int | list[int], lag: int
+) -> npt.NDArray[np.float64]:
+    """Calculate H-normalized transfer entropy between discrete variables.
+
+    Normalized as: 1 - H(Y_t | Y_t_lag, X_t_lag) / H(Y_t | Y_t_lag)
+
+    Args:
+        classes: Array of discrete state indices [timesteps x variables]
+        n_classes: Number of bins for each variable
+        lag: Time lag for analysis
+
+    Returns:
+        Matrix containing normalized transfer entropy values.
+        Entry [i,j] is normalized TE from X_j to X_i.
+
+    """
+    n_steps, n_vars = classes.shape
+
+    if isinstance(n_classes, int):
+        n_classes = [n_classes] * n_vars
+
+    current = classes[lag:]
+    lagged = classes[:-lag]
+
+    ntent = np.zeros((n_vars, n_vars))
+
+    h_xy_lag = discrete_joint_entropy(lagged, n_classes)
+    h_x_lag = discrete_entropy(lagged, n_classes)
+
+    for i in range(n_vars):
+        h_y_ylag = discrete_joint_entropy(
             np.column_stack([current[:, i], lagged[:, i]]),
-            ([bins[i], bins[i]] if isinstance(bins, list) else bins),
-        )
-        for j in range(dim):
-            h_y_ylag_xlag = multivar_joint_entropy(
-                np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
-                ([bins[i], bins[i], bins[j]] if isinstance(bins, list) else bins),
+            [n_classes[i], n_classes[i]],
+        )[0, 1]
+        for j in range(n_vars):
+            h_y_ylag_xlag = discrete_multivar_joint_entropy(
+                [current[:, i], lagged[:, i], lagged[:, j]],
+                [n_classes[i], n_classes[i], n_classes[j]],
             )
-            numerator = h_y_ylag_xlag - h_ylag_xlag[i, j]
-            denominator = h_y_ylag - h_ylag[i]
-            tent[i, j] = (
-                np.round(1 - numerator / denominator, 10) if denominator != 0 else 0
+            h_y_given_ylag_xlag = h_y_ylag_xlag - h_xy_lag[i, j]
+            h_y_given_ylag = h_y_ylag - h_x_lag[i]
+            ntent[i, j] = (
+                1 - h_y_given_ylag_xlag / h_y_given_ylag if h_y_given_ylag != 0 else 0
             )
-    return tent
+    return ntent
 
 
 def logn_normalized_transfer_entropy(
