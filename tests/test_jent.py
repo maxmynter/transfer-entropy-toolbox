@@ -34,6 +34,9 @@ def test_jent_known_distribution():
     expected = 2 * np.log(2)  # = -4 * (0.25 * log(0.25))
 
     assert_almost_equal(result[0, 1], expected)
+    assert_almost_equal(result[1, 0], expected)
+    assert_almost_equal(result[0, 0], entropy(x, bins=2))
+    assert_almost_equal(result[1, 1], entropy(y, bins=2))
 
 
 @given(
