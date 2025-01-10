@@ -70,7 +70,7 @@ def _discrete_univariate_entropy(
     n_steps = data.shape[0]
     p = np.bincount(data[:, at], minlength=n_classes[at]) / n_steps
     nonzero = p > 0
-    return np.floating(-np.sum(p[nonzero] * np.log(p[nonzero])))
+    return np.float64(-np.sum(p[nonzero] * np.log(p[nonzero])))
 
 
 @overload
@@ -191,7 +191,7 @@ def _discrete_bivariate_joint_entropy(
     np.add.at(hist, (data[:, i], data[:, j]), 1)
     p_xy = hist / n_steps
     nonzero_mask = p_xy > 0
-    return np.floating(-np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])))
+    return np.float64(-np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])))
 
 
 @overload
@@ -325,7 +325,7 @@ def discrete_multivar_joint_entropy(
 
     p = hist / n_steps
     nonzero_mask = p > 0
-    return np.floating(-np.sum(p[nonzero_mask] * np.log(p[nonzero_mask])))
+    return np.float64(-np.sum(p[nonzero_mask] * np.log(p[nonzero_mask])))
 
 
 def multivar_joint_entropy(
