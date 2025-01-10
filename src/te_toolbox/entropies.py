@@ -1,6 +1,6 @@
 """Contains all the entropy and derived measures."""
 
-from functools import cache
+from functools import lru_cache
 
 import numpy as np
 import numpy.typing as npt
@@ -9,7 +9,7 @@ MATRIX_DIMS = 2
 VECTOR_DIMS = 1
 
 
-@cache
+@lru_cache(maxsize=1024)
 def _discretize_1d_data(
     data: tuple[float], bins: int | tuple[float, ...]
 ) -> tuple[npt.NDArray[np.int64], int]:
@@ -35,7 +35,7 @@ def _discretize_1d_data(
     return indices, len(edges) - 1
 
 
-@cache
+@lru_cache(maxsize=1024)
 def _discretize_nd_data(
     data_tuple: tuple[tuple[float, ...], ...],
     bins_tuple: tuple[int | tuple[float, ...], ...],
