@@ -508,42 +508,60 @@ def discrete_normalized_transfer_entropy(
     return ntent
 
 
+def discrete_logn_normalized_transfer_entropy(
+    classes: npt.NDArray[np.int64], n_classes: int | list[int], lag: int
+) -> npt.NDArray[np.float64]:
+    """Calculate transfer entropy normalized by log(N) between discrete variables.
+
+    Args:
+        classes: Array of discrete state indices [timesteps x variables]
+        n_classes: Number of bins for each variable
+        lag: Time lag for analysis
+
+    Returns:
+        Matrix containing logN-normalized transfer entropy values.
+        Entry [i,j] is normalized TE from X_j to X_i.
+
+    """
+    te = discrete_transfer_entropy(classes, n_classes, lag)
+
+    if isinstance(n_classes, int):
+        te /= np.log(n_classes)
+    else:
+        for i in range(te.shape[0]):
+            te[i] /= np.log(n_classes[i])
+
+    return te
+
+
 def logn_normalized_transfer_entropy(
     data: npt.NDArray[np.float64],
-    bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
+    bins: int | npt.NDArray[np.float64] | list[int | npt.NDArray[np.float64]],
     lag: int,
 ) -> npt.NDArray[np.float64]:
     """Calculate transfer entropy normalized by log(N) where N is number of bins.
 
     Args:
-    ----
-        data: Input array of shape [timesteps x variables].
-        bins: Number of bins or bin edges for histogram.
-        lag: Time lag for analysis.
+        data: Input array of shape [timesteps x variables]
+        bins: Number of bins or bin edges for histogram
+        lag: Time lag for analysis
 
     Returns:
-    -------
-        ndarray: Matrix of shape [n_variables, n_variables] containing
-            logN-normalized transfer entropy values.
+        Matrix containing logN-normalized transfer entropy values.
+        Entry [i,j] represents normalized TE from X_j to X_i.
 
     """
-    te = transfer_entropy(data, bins, lag)
-    if isinstance(bins, list):
-        for i in range(te.shape[0]):
-            if isinstance(bins[i], int):
-                te[i] = te[i] / np.log(bins[i])
-            elif isinstance(bins[i], np.ndarray):
-                n_bins = len(bins[i]) - 1
-                te[i] = te[i] / np.log(n_bins)
-            else:
-                raise ValueError(
-                    "Bin list must contain int of bins or np.array of bin edges"
-                )
-    elif isinstance(bins, np.ndarray):
-        te /= np.log(len(bins) - 1)
-    elif isinstance(bins, int):
-        te /= np.log(bins)
-    else:
-        raise ValueError("Bins must be int, list[np.array], or np.array.")
+    n_vars = data.shape[1]
 
-    return te
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * n_vars
+
+    # Convert to tuples for caching
+    data_tuple = tuple(tuple(data[:, i]) for i in range(n_vars))
+    bins_tuple = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
+
+    discretized = _discretize_nd_data(data_tuple, bins_tuple)
+    indices = np.column_stack([d[0] for d in discretized])
+    n_classes = [d[1] for d in discretized]
+
+    return discrete_logn_normalized_transfer_entropy(indices, n_classes, lag)
