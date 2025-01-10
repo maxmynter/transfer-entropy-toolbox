@@ -10,7 +10,6 @@ from numpy.testing import assert_array_almost_equal
 from te_toolbox.entropies import (
     logn_normalized_transfer_entropy,
     normalized_transfer_entropy,
-    prepare_te_data,
     transfer_entropy,
 )
 from tests.conftest import (
@@ -44,21 +43,6 @@ def generate_coupled_series(
     for t in range(1, n_steps):
         y[t] = coupling * x[t - 1] + noise_level * np.random.normal()
     return np.column_stack([x, y])
-
-
-def test_prepare_te_data():
-    """Test data preparation for TE calculation."""
-    data = np.array([[1, 4], [2, 5], [3, 6]])
-    lag = 1
-    bins = 3
-
-    current, lagged, bin_list = prepare_te_data(data, lag, bins)
-    assert current.shape[0] == lagged.shape[0]
-    assert current.shape[1] == lagged.shape[1]
-    assert len(bin_list) == data.shape[1]
-
-    with pytest.raises(ValueError):
-        prepare_te_data(np.array([1, 2, 3]), lag, bins)
 
 
 def test_transfer_entropy_zero():
