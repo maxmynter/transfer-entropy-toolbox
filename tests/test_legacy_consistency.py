@@ -39,7 +39,12 @@ def test_basic_consistency():
         ),
         (
             "Conditional Entropy",
-            lambda d, b: (tp.conditional_entropy(d, b), tb.conditional_entropy(d, b)),
+            # NOTE: Legacy Conditional Entropy has an index flip.
+            # In index [i, j] it has H(X_j | X_i) which is transposed from all other
+            # interfaces. As this function is not used in higher order ones, this did
+            # not raise suspicion until the legacy tests. We transpose in the test
+            # here as to not touch the legacy implementation.
+            lambda d, b: (tp.conditional_entropy(d, b).T, tb.conditional_entropy(d, b)),
         ),
         (
             "Transfer Entropy",
