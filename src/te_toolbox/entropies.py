@@ -283,7 +283,7 @@ def discrete_multivar_joint_entropy(
     n_classes: list[int],
 ) -> np.float64:
     """Calculate joint entropy from discrete classes for multiple variables."""
-    n_steps, _ = classes[0].shape
+    n_steps = classes[0].shape
     hist = np.zeros(n_classes)
 
     idx = tuple(c for c in classes)
