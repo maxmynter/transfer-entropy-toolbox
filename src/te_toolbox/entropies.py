@@ -59,9 +59,19 @@ def discrete_entropy(
     data: npt.NDArray[np.int64], n_classes: int | list[int]
 ) -> npt.NDArray[np.float64]:
     """Calculate the discrete entropy from class assignments."""
-    probs = np.bincount(classes, minlength=n_classes) / len(classes)
-    nonzero_mask = probs > 0
-    return -np.sum(probs[nonzero_mask] * np.log(probs[nonzero_mask]))
+    data = data.reshape(-1, 1) if data.ndim == 1 else data
+    n_steps, n_vars = data.shape
+
+    if isinstance(n_classes, int):
+        n_classes = [n_classes] * n_vars
+
+    probs = np.empty(n_vars)
+    for i in range(n_vars):
+        p = np.bincount(data[:, i], minlength=n_classes[i]) / n_steps
+        nonzero = p > 0
+        probs[i] = -np.sum(p[nonzero] * np.log(p[nonzero]))
+
+    return probs
 
 
 def entropy(
@@ -87,23 +97,27 @@ def entropy(
     """
     if data.size == 0:
         raise ValueError("Cannot compute entropy of empty array")
+    if data.ndim > MATRIX_DIMS or data.ndim < VECTOR_DIMS:
+        raise ValueError(
+            "Wrong data format."
+            "Data must be of dimension [timesteps] or [timesteps x variables]"
+        )
 
-    match data.ndim:
-        case dim if dim == VECTOR_DIMS:
-            hashable_bins = bins if isinstance(bins, int) else tuple(bins)
-            indices, n_bins = _discretize_data(tuple(data), hashable_bins)
-            return discrete_entropy(indices, n_bins)
-        case dim if dim == MATRIX_DIMS:
-            n_vars = data.shape[1]
-            if isinstance(bins, int | np.ndarray):
-                bins = [bins] * n_vars
-            return np.array([entropy(data[:, i], bins[i]) for i in range(n_vars)])
-        case _:
-            raise ValueError(
-                """
-                Wrong data format.
-                Data must be of dimension [timesteps] or [timesteps x variables]"""
-            )
+
+    data = data.reshape(-1, 1) if data.ndim == 1 else data
+    n_vars = data.shape[1]
+
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * n_vars
+
+    data_tuple = tuple(tuple(data[:, i]) for i in range(n_vars))
+    bins_tuple = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
+
+    discretized = _discretize_nd_data(data_tuple, bins_tuple)
+    indices = np.column_stack([d[0] for d in discretized])
+    n_classes = [d[1] for d in discretized]
+
+    return discrete_entropy(indices, n_classes)
 
 
 def discrete_joint_entropy(
