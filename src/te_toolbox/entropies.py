@@ -10,7 +10,7 @@ VECTOR_DIMS = 1
 
 
 @cache
-def _discretize_data(
+def _discretize_1d_data(
     data: tuple[float], bins: int | tuple[float, ...]
 ) -> tuple[npt.NDArray[np.int64], int]:
     """Convert dataset into discrete classes.
@@ -142,8 +142,8 @@ def joint_entropy(
         hashable_bins_i = bins[i] if isinstance(bins[i], int) else tuple(bins[i])
         hashable_bins_j = bins[j] if isinstance(bins[j], int) else tuple(bins[j])
 
-        indices_i, n_bins_i = _discretize_data(tuple(data[:, i]), hashable_bins_i)
-        indices_j, n_bins_j = _discretize_data(tuple(data[:, j]), hashable_bins_j)
+        indices_i, n_bins_i = _discretize_1d_data(tuple(data[:, i]), hashable_bins_i)
+        indices_j, n_bins_j = _discretize_1d_data(tuple(data[:, j]), hashable_bins_j)
 
         entropy_value = discrete_joint_entropy(indices_i, indices_j, n_bins_i, n_bins_j)
 
