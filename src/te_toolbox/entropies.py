@@ -412,10 +412,10 @@ def conditional_entropy(
             "Need more than 2 time series to calculate conditional entropy"
         )
     if at is not None:
-        h_xy = joint_entropy(data, bins, at)
-        h_x = entropy(data, bins, at=at[1])
+        univar_h_xy = joint_entropy(data, bins, at)
+        univar_h_x = entropy(data, bins, at=at[1])
 
-        return h_xy - h_x
+        return univar_h_xy - univar_h_x
     else:
         h_xy = joint_entropy(data, bins)
         h_x = entropy(data, bins)
@@ -456,7 +456,8 @@ def mutual_information(
 
     mi = h_x[i] + h_x[j] - h_xy[i, j]
     if norm:
-        mi = np.divide(mi, np.sqrt(np.multiply(h_x[i], h_x[j])))
+        denominator = np.sqrt(np.multiply(h_x[i], h_x[j]))
+        mi = np.divide(mi, denominator, where=denominator != 0)
 
     return mi
 
