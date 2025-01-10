@@ -23,6 +23,8 @@ def _discretize_1d_data(
     if isinstance(bins, int):
         edges = np.linspace(data_array.min(), data_array.max(), bins + 1)
     else:
+        if data_array.min()< bins[0] or data_array.max() > bins[-1]:
+            raise ValueError("Data contains values outside of specified bin range")
         edges = bins
 
     # Subtract 1 as digitize is 1 indexed
