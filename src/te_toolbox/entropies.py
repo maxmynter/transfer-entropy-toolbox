@@ -73,7 +73,7 @@ def entropy(
             return discrete_entropy(indices, n_bins)
         case dim if dim == MATRIX_DIMS:
             n_vars = data.shape[1]
-            if isinstance(bins, int | float | np.ndarray):
+            if isinstance(bins, int | np.ndarray):
                 bins = [bins] * n_vars
             return np.array([entropy(data[:, i], bins[i]) for i in range(n_vars)])
         case _:
