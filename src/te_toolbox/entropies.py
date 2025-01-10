@@ -7,10 +7,10 @@ from typing import overload
 import numpy as np
 import numpy.typing as npt
 
-FloatArray = npt.NDArray[np.float64]
+FloatArray = npt.NDArray[np.floating]
 IntArray = npt.NDArray[np.int64]
 BinType = int | FloatArray | Sequence[int | FloatArray]
-
+NClasses = int | list[int]
 
 MATRIX_DIMS = 2
 VECTOR_DIMS = 1
@@ -18,7 +18,7 @@ VECTOR_DIMS = 1
 
 @lru_cache(maxsize=1024)
 def _discretize_1d_data(
-    data: tuple[np.float64], bins: int | tuple[float, ...]
+    data: tuple[np.floating], bins: int | tuple[float, ...]
 ) -> tuple[IntArray, int]:
     """Convert dataset into discrete classes.
 
@@ -66,17 +66,17 @@ def _discretize_nd_data(
 
 def _discrete_univariate_entropy(
     data: IntArray, n_classes: list[int], at: int
-) -> np.float64:
+) -> np.floating:
     n_steps = data.shape[0]
     p = np.bincount(data[:, at], minlength=n_classes[at]) / n_steps
     nonzero = p > 0
-    return np.float64(-np.sum(p[nonzero] * np.log(p[nonzero])))
+    return np.floating(-np.sum(p[nonzero] * np.log(p[nonzero])))
 
 
 @overload
 def discrete_entropy(
     data: IntArray, n_classes: int | list[int], at: int
-) -> np.float64: ...
+) -> np.floating: ...
 
 
 @overload
@@ -85,9 +85,16 @@ def discrete_entropy(
 ) -> FloatArray: ...
 
 
+@overload
+def discrete_entropy(
+    data: IntArray,
+    n_classes: int | list[int],
+) -> FloatArray: ...
+
+
 def discrete_entropy(
     data: IntArray, n_classes: int | list[int], at: int | None = None
-) -> FloatArray | np.float64:
+) -> FloatArray | np.floating:
     """Calculate the discrete entropy from class assignments."""
     data = data.reshape(-1, 1) if data.ndim == 1 else data
     _, n_vars = data.shape
@@ -98,7 +105,7 @@ def discrete_entropy(
     if at is not None:
         return _discrete_univariate_entropy(data, n_classes, at)
     else:
-        probs = np.empty(n_vars)
+        probs = np.empty(n_vars, dtype=np.floating)
         for i in range(n_vars):
             probs[i] = _discrete_univariate_entropy(data, n_classes, i)
 
@@ -110,7 +117,14 @@ def entropy(
     data: FloatArray,
     bins: BinType,
     at: int,
-) -> np.float64: ...
+) -> np.floating: ...
+
+
+@overload
+def entropy(
+    data: FloatArray,
+    bins: BinType,
+) -> FloatArray: ...
 
 
 @overload
@@ -125,7 +139,7 @@ def entropy(
     data: FloatArray,
     bins: BinType,
     at: int | None = None,
-) -> FloatArray | np.float64:
+) -> FloatArray | np.floating:
     """Calculate the entropy of one or more datasets.
 
     Args:
@@ -170,20 +184,27 @@ def entropy(
 
 def _discrete_bivariate_joint_entropy(
     data: IntArray, n_classes: list[int], at: tuple[int, int]
-) -> np.float64:
+) -> np.floating:
     i, j = at
     n_steps, _ = data.shape
     hist = np.zeros((n_classes[i], n_classes[j]))
     np.add.at(hist, (data[:, i], data[:, j]), 1)
     p_xy = hist / n_steps
     nonzero_mask = p_xy > 0
-    return np.float64(-np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])))
+    return np.floating(-np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])))
 
 
 @overload
 def discrete_joint_entropy(
     data: IntArray,
-    n_classes: list | list[int],
+    n_classes: NClasses,
+) -> FloatArray: ...
+
+
+@overload
+def discrete_joint_entropy(
+    data: IntArray,
+    n_classes: NClasses,
     at: None,
 ) -> FloatArray: ...
 
@@ -191,16 +212,16 @@ def discrete_joint_entropy(
 @overload
 def discrete_joint_entropy(
     data: IntArray,
-    n_classes: list | list[int],
+    n_classes: int | list[int],
     at: tuple[int, int],
-) -> np.float64: ...
+) -> np.floating: ...
 
 
 def discrete_joint_entropy(
     data: IntArray,
-    n_classes: list | list[int],
+    n_classes: int | list[int],
     at: tuple[int, int] | None = None,
-) -> FloatArray | np.float64:
+) -> FloatArray | np.floating:
     """Calculate the pairwise discrete joint entropy from class assignments."""
     if data.ndim != MATRIX_DIMS:
         raise ValueError(
@@ -214,7 +235,7 @@ def discrete_joint_entropy(
     if at is not None:
         return _discrete_bivariate_joint_entropy(data, n_classes, at)
 
-    jent = np.zeros((n_vars, n_vars))
+    jent = np.zeros((n_vars, n_vars), dtype=np.floating)
     for i in range(n_vars):
         for j in range(i, n_vars):
             jent[i, j] = jent[j, i] = _discrete_bivariate_joint_entropy(
@@ -228,7 +249,14 @@ def joint_entropy(
     data: FloatArray,
     bins: BinType,
     at: tuple[int, int],
-) -> np.float64: ...
+) -> np.floating: ...
+
+
+@overload
+def joint_entropy(
+    data: FloatArray,
+    bins: BinType,
+) -> FloatArray: ...
 
 
 @overload
@@ -243,7 +271,7 @@ def joint_entropy(
     data: FloatArray,
     bins: BinType,
     at: tuple[int, int] | None = None,
-) -> FloatArray | np.float64:
+) -> FloatArray | np.floating:
     """Calculate pairwise joint entropy between all variables in the dataset.
 
     Args:
@@ -287,7 +315,7 @@ def joint_entropy(
 def discrete_multivar_joint_entropy(
     classes: list[IntArray],
     n_classes: list[int],
-) -> np.float64:
+) -> np.floating:
     """Calculate joint entropy from discrete classes for multiple variables."""
     n_steps = classes[0].shape
     hist = np.zeros(n_classes)
@@ -297,13 +325,13 @@ def discrete_multivar_joint_entropy(
 
     p = hist / n_steps
     nonzero_mask = p > 0
-    return np.float64(-np.sum(p[nonzero_mask] * np.log(p[nonzero_mask])))
+    return np.floating(-np.sum(p[nonzero_mask] * np.log(p[nonzero_mask])))
 
 
 def multivar_joint_entropy(
     data: FloatArray,
     bins: BinType,
-) -> np.float64:
+) -> np.floating:
     """Calculate joint entropy for n variables.
 
     Args:
@@ -335,7 +363,14 @@ def conditional_entropy(
     data: FloatArray,
     bins: BinType,
     at: tuple[int, int],
-) -> np.float64: ...
+) -> np.floating: ...
+
+
+@overload
+def conditional_entropy(
+    data: FloatArray,
+    bins: BinType,
+) -> FloatArray: ...
 
 
 @overload
@@ -350,7 +385,7 @@ def conditional_entropy(
     data: FloatArray,
     bins: BinType,
     at: tuple[int, int] | None = None,
-) -> FloatArray | np.float64:
+) -> FloatArray | np.floating:
     """Calculate conditional entropy between all pairs of variables.
 
     Uses the chain rule: H(Y|X) = H(X,Y) - H(X)
@@ -424,48 +459,6 @@ def mutual_information(
         mi = np.divide(mi, np.sqrt(np.multiply(h_x[i], h_x[j])))
 
     return mi
-
-
-def prepare_te_data(
-    data: FloatArray,
-    lag: int,
-    bins: BinType,
-) -> tuple[
-    FloatArray,
-    FloatArray,
-    list[int | npt.NDArray[np.float64]],
-]:
-    """Prepare data arrays and bins for transfer entropy calculation.
-
-    Args:
-    ----
-        data: Input data array of shape [timesteps x variables].
-        lag: Time lag for analysis.
-        bins: Number of bins (int), bin edges, or list of per variable bin
-              edges for histogram.
-
-    Returns:
-    -------
-        tuple: (current data, lagged data, bin list)
-
-    Raises:
-    ------
-        ValueError: If data dimensions are invalid.
-
-    """
-    if data.ndim != MATRIX_DIMS:
-        raise ValueError("Data must be 2-dimensional [timesteps x variables]")
-    if isinstance(bins, list) and len(bins) != data.shape[1]:
-        raise ValueError(
-            f"Bin specifications ({len(bins)}) must match variables ({data.shape[1]}). "
-            "Provide either: a single integer for uniform bins, "
-            "a list of integers for variable-specific bin counts, "
-            "or a list of arrays defining bin edges for each variable."
-        )
-
-    dim = data.shape[1]
-    bins = [bins] * dim if isinstance(bins, int) else bins
-    return data[lag:], data[:-lag], bins
 
 
 def discrete_transfer_entropy(
@@ -586,7 +579,7 @@ def normalized_transfer_entropy(
 
 
 def discrete_normalized_transfer_entropy(
-    classes: IntArray, n_classes: int | list[int], lag: int
+    classes: IntArray, n_classes: NClasses, lag: int
 ) -> FloatArray:
     """Calculate H-normalized transfer entropy between discrete variables.
 
@@ -636,7 +629,7 @@ def discrete_normalized_transfer_entropy(
 
 
 def discrete_logn_normalized_transfer_entropy(
-    classes: IntArray, n_classes: int | list[int], lag: int
+    classes: IntArray, n_classes: NClasses, lag: int
 ) -> FloatArray:
     """Calculate transfer entropy normalized by log(N) between discrete variables.
 
@@ -663,7 +656,7 @@ def discrete_logn_normalized_transfer_entropy(
 
 def logn_normalized_transfer_entropy(
     data: FloatArray,
-    bins: int | npt.NDArray[np.float64] | list[int | npt.NDArray[np.float64]],
+    bins: BinType,
     lag: int,
 ) -> FloatArray:
     """Calculate transfer entropy normalized by log(N) where N is number of bins.
