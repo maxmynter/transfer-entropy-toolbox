@@ -77,7 +77,7 @@ def discrete_entropy(
 def entropy(
     data: npt.NDArray[np.float64],
     bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64] | np.float64:
+) -> npt.NDArray[np.float64]:
     """Calculate the entropy of one or more datasets.
 
     Args:
