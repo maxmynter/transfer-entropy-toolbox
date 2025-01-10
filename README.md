@@ -24,8 +24,12 @@ pip install -e ".[dev]"
 pytest
 ```
 
-#### Running Legacy Tests
-The legacy tests require additional dependencies and are disabled by default. To run them:
+#### Running Legacy Consistency Tests
+I am rewriting large chunks of the codebase that was the foundation of my thesis to incorporate
+the practices I've developed as a software engineer since then. 
+
+There is a dedicated test suite to test consistencies against the legacy codebase.
+The legacy code requires additional dependencies and the tests are disabled by default. To run them:
 
 1. Install legacy test dependencies:
 ```bash
