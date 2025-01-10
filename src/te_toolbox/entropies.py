@@ -346,6 +346,45 @@ def prepare_te_data(
     return data[lag:], data[:-lag], bins
 
 
+def discrete_transfer_entropy(
+    classes: npt.NDArray[np.int64], n_classes: int | list[int], lag: int
+) -> npt.NDArray[np.float64]:
+    """Calculate transfer entropy between all pairs of discrete variables.
+
+    Args:
+        classes: Array of discrete state indices [timesteps x variables]
+        n_classes: Number of bins for each variable
+        lag: Time lag for analysis
+
+    Returns:
+        Matrix containing transfer entropy values. Entry [i,j] is TE from X_j to X_i.
+
+    """
+    if isinstance(n_classes, int):
+        n_classes = [n_classes] * classes.shape[1]
+
+    current = classes[lag:]
+    lagged = classes[:-lag]
+
+    dim = current.shape[1]
+    tent = np.zeros((dim, dim))
+
+    h_xy_lag = discrete_joint_entropy(lagged, n_classes)
+    h_x_lag = discrete_entropy(lagged, n_classes)
+
+    for i in range(dim):
+        h_y_ylag = discrete_joint_entropy(
+            np.column_stack([current[:, i], lagged[:, i]]), [n_classes[i], n_classes[i]]
+        )[0, 1]
+        for j in range(dim):
+            h_y_ylag_xlag = discrete_multivar_joint_entropy(
+                [current[:, i], lagged[:, i], lagged[:, j]],
+                [n_classes[i], n_classes[i], n_classes[j]],
+            )
+            tent[i, j] = h_y_ylag + h_xy_lag[i, j] - h_y_ylag_xlag - h_x_lag[i]
+    return tent
+
+
 def transfer_entropy(
     data: npt.NDArray[np.float64],
     bins: int | list[int | npt.NDArray[np.float64]] | npt.NDArray[np.float64],
@@ -365,32 +404,19 @@ def transfer_entropy(
             entropy values. Entry [i,j] is the transfer entropy from X_j to X_i.
 
     """
-    current, lagged, bins = prepare_te_data(data, lag, bins)
-    dim = data.shape[1]
-    tent = np.zeros((dim, dim))
+    n_vars = data.shape[1]
 
-    # H(X_t-1, Y_t-1)
-    h_xy_lag = joint_entropy(lagged, bins)
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * n_vars
 
-    # H(X_t-1)
-    h_x_lag = entropy(lagged, bins)
+    data_tuple = tuple(tuple(data[:, i]) for i in range(n_vars))
+    bins_tuple = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
 
-    for i in range(dim):
-        # H(Y_t, Y_t-1)
-        h_y_ylag = joint_entropy(
-            np.column_stack([current[:, i], lagged[:, i]]),
-            ([bins[i], bins[i]] if isinstance(bins, list) else bins),
-        )[0, 1]
+    discretized = _discretize_nd_data(data_tuple, bins_tuple)
+    indices = np.column_stack([d[0] for d in discretized])
+    n_classes = [d[1] for d in discretized]
 
-        for j in range(dim):
-            # H(Y_t, Y_t-1, X_t-1)
-            h_y_ylag_xlag = multivar_joint_entropy(
-                np.column_stack([current[:, i], lagged[:, i], lagged[:, j]]),
-                ([bins[i], bins[i], bins[j]] if isinstance(bins, list) else bins),
-            )
-            tent[i, j] = h_y_ylag + h_xy_lag[i, j] - h_y_ylag_xlag - h_x_lag[i]
-
-    return tent
+    return discrete_transfer_entropy(indices, n_classes, lag)
 
 
 def normalized_transfer_entropy(
