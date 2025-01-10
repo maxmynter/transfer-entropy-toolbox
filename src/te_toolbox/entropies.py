@@ -35,7 +35,29 @@ def _discretize_1d_data(
     return indices, len(edges) - 1
 
 
-def discrete_entropy(classes: npt.NDArray[np.int64], n_classes: int) -> np.float64:
+@cache
+def _discretize_nd_data(
+    data_tuple: tuple[tuple[float, ...], ...],
+    bins_tuple: tuple[int | tuple[float, ...], ...],
+) -> tuple[tuple[npt.NDArray[np.int64], int], ...]:
+    """Convert multiple variables into discrete classes.
+
+    Args:
+        data_tuple: Tuple of data arrays, one per variable
+        bins_tuple: Tuple of bin specifications, one per variable
+
+    Returns:
+        Tuple of (indices, n_bins) pairs, one per variable
+
+    """
+    return tuple(
+        _discretize_1d_data(d, b) for d, b in zip(data_tuple, bins_tuple, strict=True)
+    )
+
+
+def discrete_entropy(
+    data: npt.NDArray[np.int64], n_classes: int | list[int]
+) -> npt.NDArray[np.float64]:
     """Calculate the discrete entropy from class assignments."""
     probs = np.bincount(classes, minlength=n_classes) / len(classes)
     nonzero_mask = probs > 0
@@ -183,13 +205,16 @@ def multivar_joint_entropy(
         float: Joint entropy value H(X1,...,Xn).
 
     """
-    classes = []
-    n_classes = []
-    for i in range(data.shape[1]):
-        cur_bins = bins[i] if isinstance(bins, list) else bins
-        indices, n_bins = _discretize_data(tuple(data[:, i]), cur_bins)
-        classes.append(indices)
-        n_classes.append(n_bins)
+    if isinstance(bins, int | np.ndarray):
+        bins = [bins] * data.shape[1]
+
+    # Convert data and bins to hashable tuples for caching
+    data_tuples = tuple(tuple(col) for col in data.T)
+    bins_tuples = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
+
+    discretized = _discretize_nd_data(data_tuples, bins_tuples)
+    classes = [d[0] for d in discretized]
+    n_classes = [d[1] for d in discretized]
 
     return discrete_multivar_joint_entropy(classes, n_classes)
 
