@@ -103,7 +103,6 @@ def entropy(
             "Data must be of dimension [timesteps] or [timesteps x variables]"
         )
 
-
     data = data.reshape(-1, 1) if data.ndim == 1 else data
     n_vars = data.shape[1]
 
@@ -121,18 +120,29 @@ def entropy(
 
 
 def discrete_joint_entropy(
-    classes1: npt.NDArray[np.int64],
-    classes2: npt.NDArray[np.int64],
-    n_classes1: int,
-    n_classes2: int,
-) -> np.float64:
-    """Calculate the discrete joint entropy from class assignments."""
-    hist = np.zeros((n_classes1, n_classes2))
+    data: npt.NDArray[np.int64], n_classes: list | list[int]
+) -> npt.NDArray[np.float64]:
+    """Calculate the pairwise discrete joint entropy from class assignments."""
+    if data.ndim != MATRIX_DIMS:
+        raise ValueError(
+            "Need 2 dimensional array [timesteps x variables] "
+            "to calculate pairwise discrete joint entropy."
+        )
+    n_steps, n_vars = data.shape
+    if isinstance(n_classes, int):
+        n_classes = [n_classes] * n_vars
 
-    np.add.at(hist, (classes1, classes2), 1)
-    p_xy = hist / len(classes1)
-    nonzero_mask = p_xy > 0
-    return -np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask]))
+    jent = np.zeros((n_vars, n_vars))
+    for i in range(n_vars):
+        for j in range(i, n_vars):
+            hist = np.zeros((n_classes[i], n_classes[j]))
+            np.add.at(hist, (data[:, i], data[:, j]), 1)
+            p_xy = hist / n_steps
+            nonzero_mask = p_xy > 0
+            jent[i, j] = jent[j, i] = -np.sum(
+                p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])
+            )
+    return jent
 
 
 def joint_entropy(
@@ -162,30 +172,19 @@ def joint_entropy(
     """
     if data.ndim != MATRIX_DIMS:
         raise ValueError("Data must be 2-dimensional [timesteps x variables]")
-
-    dim = data.shape[1]  # Number of variables
-    if dim < 2:  # noqa: PLR2004, 2 dimensions necessary for jent calculation
-        raise ValueError("Need at least 2 variables to calculate joint entropy")
-
-    jent = np.zeros((dim, dim), dtype=np.float64)
+    _, n_vars = data.shape
 
     if isinstance(bins, int | np.ndarray):
-        bins = [bins] * dim
+        bins = [bins] * n_vars
 
-    idxs, jdxs = np.triu_indices(dim)
-    for idx in range(len(idxs)):
-        i, j = idxs[idx], jdxs[idx]
-        hashable_bins_i = bins[i] if isinstance(bins[i], int) else tuple(bins[i])
-        hashable_bins_j = bins[j] if isinstance(bins[j], int) else tuple(bins[j])
+    # Convert to tuples for hashing
+    data_tuple = tuple(tuple(data[:, i]) for i in range(n_vars))
+    bins_tuple = tuple(b if isinstance(b, int) else tuple(b) for b in bins)
 
-        indices_i, n_bins_i = _discretize_1d_data(tuple(data[:, i]), hashable_bins_i)
-        indices_j, n_bins_j = _discretize_1d_data(tuple(data[:, j]), hashable_bins_j)
-
-        entropy_value = discrete_joint_entropy(indices_i, indices_j, n_bins_i, n_bins_j)
-
-        jent[i, j] = entropy_value
-        jent[j, i] = entropy_value
-    return jent
+    discretized = _discretize_nd_data(data_tuple, bins_tuple)
+    indices = np.column_stack([d[0] for d in discretized])
+    n_classes = [d[1] for d in discretized]
+    return discrete_joint_entropy(indices, n_classes)
 
 
 def discrete_multivar_joint_entropy(
