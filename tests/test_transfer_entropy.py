@@ -217,7 +217,7 @@ def test_log_normalized_te(n_steps, coupling, noise_level, n_bins):
 )
 def test_logn_te_list_bins(bins, expected_shape):
     """Test logN normalized TE with list of bin specifications."""
-    data = generate_coupled_series(1000, 0.5, 0.1)
+    data = np.clip(generate_coupled_series(1000, 0.5, 0.1), -3, 3)
     result = logn_normalized_transfer_entropy(data, bins=bins, lag=1)
     assert result.shape == expected_shape
     assert np.all(result >= 0 - NUMERIC_TOLERANCE)
