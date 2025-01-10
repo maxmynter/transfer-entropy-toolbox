@@ -453,8 +453,10 @@ def mutual_information(
     h_x = entropy(data, bins)
 
     i, j = np.meshgrid(range(dim), range(dim))
+    idx = i.astype(np.int64)
+    jdx = j.astype(np.int64)
 
-    mi = h_x[i] + h_x[j] - h_xy[i, j]
+    mi = (h_x[idx] + h_x[jdx] - h_xy[idx, jdx]).astype(np.floating)
     if norm:
         denominator = np.sqrt(np.multiply(h_x[i], h_x[j]))
         mi = np.divide(mi, denominator, where=denominator != 0)
