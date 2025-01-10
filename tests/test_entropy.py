@@ -37,6 +37,29 @@ def test_entropy_known_distribution():
     assert_almost_equal(result, expected)
 
 
+def test_entropy_of_stationary_zero():
+    """The entropy of a stationary set must be 0."""
+    data = np.array([1, 1, 1, 1])
+    assert_almost_equal(entropy(data, bins=2), 0.0)
+
+
+def test_entropy_2d_known_distribution():
+    """Test entropy of multiple variables with individual bins."""
+    data1 = np.array([0, 1, 2, 3])
+    data2 = np.array([0, 0, 2, 2])
+
+    data = np.column_stack((data1, data2))
+
+    bins1 = np.array([-0.01, 0.99, 1.99, 2.99, 3.00])
+    bins2 = np.array([-0.01, 1.5, 3.0])
+    bins = [bins1, bins2]
+
+    expected1 = -4 * 0.25 * np.log(0.25)  # Four times P(x_i) = 1/4
+    expected2 = -2 * 0.5 * np.log(0.5)  # Two times P'(x_i) = 1/2
+
+    assert_almost_equal(entropy(data, bins=bins), np.array([expected1, expected2]))
+
+
 def test_entropy_deterministic_distribution():
     """Test entropy calculation for deterministic distribution."""
     # All same values should have zero entropy
