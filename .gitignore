@@ -3,3 +3,4 @@ __pycache__
 .coverage
 .hypothesis
 master_thesis_mynter.pdf
+plots/
