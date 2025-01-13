@@ -180,9 +180,13 @@ def main():
 
     for map_name in maps:
         print(f"__________________{map_name}")
-        plot_prefix = str(PLOT_PATH) + (
-            f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
-            f"{N_ITER}Data_{len(EPSILONS)}_eps_{map_name}_"
+        plot_prefix = (
+            str(PLOT_PATH)
+            + "/"
+            + (
+                f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
+                f"{N_ITER}Data_{len(EPSILONS)}_eps_{map_name}_"
+            )
         )
         analyze_map(map_name, plot_prefix)
 
