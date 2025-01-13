@@ -1,6 +1,6 @@
 """Script to generate CML data for various maps and coupling strengths."""
 
-from eps_scan_constants import EPSILONS, N_ITER, N_MAPS, N_TRANSIENT, OUTPUT_DIR, SEED
+from eps_scan_constants import EPS_DATA_DIR, EPSILONS, N_ITER, N_MAPS, N_TRANSIENT, SEED
 
 from te_toolbox.systems.lattice import CMLConfig, CoupledMapLatticeGenerator
 from te_toolbox.systems.maps import (
@@ -20,7 +20,7 @@ def create_cml(map_function: Map) -> None:
 
     """
     # Ensure output directory exists
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    EPS_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # Generate data for each coupling strength
     for eps in EPSILONS:
@@ -34,7 +34,7 @@ def create_cml(map_function: Map) -> None:
             n_steps=N_ITER,
             warmup_steps=N_TRANSIENT,
             seed=SEED,
-            output_dir=str(OUTPUT_DIR),
+            output_dir=str(EPS_DATA_DIR),
         )
 
         # Generate and save data

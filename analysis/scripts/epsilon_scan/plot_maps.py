@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from eps_scan_constants import (
+    EPS_DATA_DIR,
     EPSILONS,
     LAG,
     N_BINS,
     N_ITER,
     N_MAPS,
-    OUTPUT_DIR,
+    PLOT_PATH,
     RELATIVE_NOISE_AMPLITUDE,
 )
 
@@ -34,10 +35,10 @@ plt.rcParams.update(
 sns.set()
 
 
-def analyze_map(  # noqa: PLR0915 # Script analysis takes some lines sometime....
+def analyze_map(  # noqa: PLR0915 # Script analysis takes some lines sometimes....
     map_name,
     plot_prefix="",
-    data_dir=OUTPUT_DIR,
+    data_dir=EPS_DATA_DIR,
     add_noise_flag=True,
     gaussian_remap_flag=True,
 ):
@@ -71,12 +72,10 @@ def analyze_map(  # noqa: PLR0915 # Script analysis takes some lines sometime...
                 amplitude=RELATIVE_NOISE_AMPLITUDE,
                 rng=rng,
             )
-            print("Added Noise")
 
         if gaussian_remap_flag:
             gaussian_samples = rng.normal(size=lattice.shape)
             lattice = remap_to(lattice, gaussian_samples, rng)
-            print("Gaussian Remap")
 
         for b, n_bins in enumerate(N_BINS):
             bins = np.linspace(np.min(lattice), np.max(lattice), n_bins + 1)
@@ -177,9 +176,9 @@ def main():
 
     for map_name in maps:
         print(f"__________________{map_name}")
-        plot_prefix = (
+        plot_prefix = str(PLOT_PATH) + (
             f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
-            "{N_ITER}Data_{len(EPSILONS)}Eps_{map_name}_"
+            f"{N_ITER}Data_{len(EPSILONS)}Eps_{map_name}_"
         )
         analyze_map(map_name, plot_prefix)
 
