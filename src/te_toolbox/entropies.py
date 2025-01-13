@@ -465,17 +465,22 @@ def mutual_information(
 
 
 def discrete_transfer_entropy(
-    classes: IntArray, n_classes: int | list[int], lag: int
-) -> FloatArray:
+    classes: IntArray,
+    n_classes: int | list[int],
+    lag: int,
+    at: tuple[int, int] | None = None,
+) -> FloatArray | np.float64:
     """Calculate transfer entropy between all pairs of discrete variables.
 
     Args:
         classes: Array of discrete state indices [timesteps x variables]
         n_classes: Number of bins for each variable
         lag: Time lag for analysis
+        at: Tuple of index pair if only that index should be computed
 
     Returns:
-        Matrix containing transfer entropy values. Entry [i,j] is TE from X_j to X_i.
+        Matrix containing transfer entropy values. Entry [i,j] is TE from X_j to X_i or
+        Float if at is set
 
     """
     if isinstance(n_classes, int):
@@ -490,12 +495,25 @@ def discrete_transfer_entropy(
     h_xy_lag = discrete_joint_entropy(lagged, n_classes)
     h_x_lag = discrete_entropy(lagged, n_classes)
 
+    if at is not None:
+        i, j = at
+        h_y_ylag_at = discrete_joint_entropy(
+            np.column_stack([current[:, i], lagged[:, i]]),
+            [n_classes[i], n_classes[i]],
+            at=(0, 1),
+        )
+        h_y_ylag_xlag_at = discrete_multivar_joint_entropy(
+            [current[:, i], lagged[:, i], lagged[:, j]],
+            [n_classes[i], n_classes[i], n_classes[j]],
+        )
+        tent_ij = h_y_ylag_at + h_xy_lag[i, j] - h_y_ylag_xlag_at - h_x_lag[i]
+        return np.float64(tent_ij)
+
     for i in range(dim):
-        at = (0, 1)
         h_y_ylag = discrete_joint_entropy(
             np.column_stack([current[:, i], lagged[:, i]]),
             [n_classes[i], n_classes[i]],
-            at=at,
+            at=(0, 1),
         )
         for j in range(dim):
             h_y_ylag_xlag = discrete_multivar_joint_entropy(
@@ -507,22 +525,22 @@ def discrete_transfer_entropy(
 
 
 def transfer_entropy(
-    data: FloatArray,
-    bins: BinType,
-    lag: int,
-) -> FloatArray:
-    """Calculate transfer entropy between all pairs of variables.
+    data: FloatArray, bins: BinType, lag: int, at: tuple[int, int] | None = None
+) -> FloatArray | np.float64:
+    """Calculate transfer entropy between all pairs of variables or single if at is set.
 
     Args:
     ----
         data: Input array of shape [timesteps x variables].
         bins: Number of bins or bin edges for histogram.
         lag: Time lag for analysis.
+        at: Tuple of index pair if only that index should be computed.
 
     Returns:
     -------
         ndarray: Matrix of shape [n_variables, n_variables] containing transfer
             entropy values. Entry [i,j] is the transfer entropy from X_j to X_i.
+        float: if at is set
 
     """
     n_vars = data.shape[1]
@@ -537,14 +555,12 @@ def transfer_entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    return discrete_transfer_entropy(indices, n_classes, lag)
+    return discrete_transfer_entropy(indices, n_classes, lag, at)
 
 
 def normalized_transfer_entropy(
-    data: FloatArray,
-    bins: BinType,
-    lag: int,
-) -> FloatArray:
+    data: FloatArray, bins: BinType, lag: int, at: tuple[int, int] | None = None
+) -> FloatArray | np.float64:
     """Calculate normalized transfer entropy between variables.
 
     Normalized as: 1 - H(Y_t | Y_t_lag, X_t_lag) / H(Y_t | Y_t_lag)
@@ -556,11 +572,13 @@ def normalized_transfer_entropy(
         data: Input array of shape [timesteps x variables].
         bins: Number of bins or bin edges for histogram.
         lag: Time lag for analysis.
+        at: Tuple of index pair if only that index should be computed.
 
     Returns:
     -------
         ndarray: Matrix of shape [n_variables, n_variables] containing normalized
             transfer entropy values. Entry [i,j] is between 0 and 1.
+        float: if at is set
 
     Raises:
     ------
@@ -578,12 +596,30 @@ def normalized_transfer_entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    return discrete_normalized_transfer_entropy(indices, n_classes, lag)
+    return discrete_normalized_transfer_entropy(indices, n_classes, lag, at)
+
+
+@overload
+def discrete_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int, at: tuple[int, int]
+) -> np.float64: ...
+
+
+@overload
+def discrete_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int, at: None
+) -> FloatArray: ...
+
+
+@overload
+def discrete_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int
+) -> FloatArray: ...
 
 
 def discrete_normalized_transfer_entropy(
-    classes: IntArray, n_classes: NClasses, lag: int
-) -> FloatArray:
+    classes: IntArray, n_classes: NClasses, lag: int, at: tuple[int, int] | None = None
+) -> FloatArray | np.float64:
     """Calculate H-normalized transfer entropy between discrete variables.
 
     Normalized as: 1 - H(Y_t | Y_t_lag, X_t_lag) / H(Y_t | Y_t_lag)
@@ -592,10 +628,12 @@ def discrete_normalized_transfer_entropy(
         classes: Array of discrete state indices [timesteps x variables]
         n_classes: Number of bins for each variable
         lag: Time lag for analysis
+        at: Tuple of index pair if only that index should be computed.
 
     Returns:
         Matrix containing normalized transfer entropy values.
         Entry [i,j] is normalized TE from X_j to X_i.
+        Float if at is set.
 
     """
     n_steps, n_vars = classes.shape
@@ -611,12 +649,32 @@ def discrete_normalized_transfer_entropy(
     h_xy_lag = discrete_joint_entropy(lagged, n_classes)
     h_x_lag = discrete_entropy(lagged, n_classes)
 
+    if at is not None:
+        i, j = at
+        h_y_ylag_at = discrete_joint_entropy(
+            np.column_stack([current[:, i], lagged[:, i]]),
+            [n_classes[i], n_classes[i]],
+            at=(i, j),
+        )
+        h_y_ylag_xlag_at = discrete_multivar_joint_entropy(
+            [current[:, i], lagged[:, i], lagged[:, j]],
+            [n_classes[i], n_classes[i], n_classes[j]],
+        )
+        h_y_given_ylag_xlag_at = h_y_ylag_xlag_at - h_xy_lag[i, j]
+        h_y_given_ylag_at = h_y_ylag_at - h_x_lag[i]
+        ntent_ij = (
+            1 - h_y_given_ylag_xlag_at / h_y_given_ylag_at
+            if h_y_given_ylag_at != 0
+            else 0
+        )
+        return np.float64(ntent_ij)
+
     for i in range(n_vars):
-        at = (0, 1)
+        _at = (0, 1)
         h_y_ylag = discrete_joint_entropy(
             np.column_stack([current[:, i], lagged[:, i]]),
             [n_classes[i], n_classes[i]],
-            at=at,
+            at=_at,
         )
         for j in range(n_vars):
             h_y_ylag_xlag = discrete_multivar_joint_entropy(
@@ -631,22 +689,52 @@ def discrete_normalized_transfer_entropy(
     return ntent
 
 
+@overload
+def discrete_logn_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int, at: tuple[int, int]
+) -> np.float64: ...
+
+
+@overload
+def discrete_logn_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int, at: None
+) -> FloatArray: ...
+
+
+@overload
 def discrete_logn_normalized_transfer_entropy(
     classes: IntArray, n_classes: NClasses, lag: int
-) -> FloatArray:
+) -> FloatArray: ...
+
+
+def discrete_logn_normalized_transfer_entropy(
+    classes: IntArray, n_classes: NClasses, lag: int, at: tuple[int, int] | None = None
+) -> FloatArray | np.float64:
     """Calculate transfer entropy normalized by log(N) between discrete variables.
 
     Args:
         classes: Array of discrete state indices [timesteps x variables]
         n_classes: Number of bins for each variable
         lag: Time lag for analysis
+        at: Tuple of index pair if only that index should be computed
 
     Returns:
         Matrix containing logN-normalized transfer entropy values.
         Entry [i,j] is normalized TE from X_j to X_i.
+        Float if at is set.
 
     """
-    te = discrete_transfer_entropy(classes, n_classes, lag)
+    te = discrete_transfer_entropy(classes, n_classes, lag, at)
+
+    if isinstance(te, float):
+        if isinstance(at, tuple):
+            return np.float64(
+                te / np.log(n_classes[at[0]])
+                if isinstance(n_classes, list)
+                else te / np.log(n_classes)
+            )
+        else:
+            raise ValueError("Entropy returned float without 'at' parameter set")
 
     if isinstance(n_classes, int):
         te /= np.log(n_classes)
@@ -657,21 +745,39 @@ def discrete_logn_normalized_transfer_entropy(
     return te
 
 
+@overload
 def logn_normalized_transfer_entropy(
-    data: FloatArray,
-    bins: BinType,
-    lag: int,
-) -> FloatArray:
+    data: FloatArray, bins: BinType, lag: int, at: tuple[int, int]
+) -> np.float64: ...
+
+
+@overload
+def logn_normalized_transfer_entropy(
+    data: FloatArray, bins: BinType, lag: int, at: None
+) -> FloatArray: ...
+
+
+@overload
+def logn_normalized_transfer_entropy(
+    data: FloatArray, bins: BinType, lag: int
+) -> FloatArray: ...
+
+
+def logn_normalized_transfer_entropy(
+    data: FloatArray, bins: BinType, lag: int, at: tuple[int, int] | None = None
+) -> FloatArray | np.float64:
     """Calculate transfer entropy normalized by log(N) where N is number of bins.
 
     Args:
         data: Input array of shape [timesteps x variables]
         bins: Number of bins or bin edges for histogram
         lag: Time lag for analysis
+        at: Tuple of index pair if only that index should be computed
 
     Returns:
         Matrix containing logN-normalized transfer entropy values.
         Entry [i,j] represents normalized TE from X_j to X_i.
+        Float if at is set.
 
     """
     n_vars = data.shape[1]
@@ -687,4 +793,4 @@ def logn_normalized_transfer_entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    return discrete_logn_normalized_transfer_entropy(indices, n_classes, lag)
+    return discrete_logn_normalized_transfer_entropy(indices, n_classes, lag, at)
