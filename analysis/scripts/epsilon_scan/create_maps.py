@@ -19,9 +19,6 @@ def create_cml(map_function: Map) -> None:
         map_function: Map to use for the CML
 
     """
-    # Ensure output directory exists
-    EPS_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
     # Generate data for each coupling strength
     for eps in EPSILONS:
         print(f"Generating {map_function.__class__.__name__} with eps={eps:.2f}")
