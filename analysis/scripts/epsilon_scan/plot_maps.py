@@ -12,6 +12,7 @@ from eps_scan_constants import (
     N_MAPS,
     PLOT_PATH,
     RELATIVE_NOISE_AMPLITUDE,
+    SEED,
 )
 
 from te_toolbox.entropies import (
@@ -59,7 +60,10 @@ def analyze_map(  # noqa: PLR0915 # Script analysis takes some lines sometimes..
     for e, eps in enumerate(EPSILONS):
         # Load and process data
         data = CoupledMapLattice.load(
-            data_dir / f"cml_map={map_name}_{N_MAPS}_x_{N_ITER}eps={eps}_seed=42.npz"
+            data_dir
+            / CoupledMapLattice.generate_default_filename(
+                map_name, N_MAPS, N_ITER, eps, SEED
+            )
         )
         lattice = data.lattice
 
@@ -178,7 +182,7 @@ def main():
         print(f"__________________{map_name}")
         plot_prefix = str(PLOT_PATH) + (
             f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
-            f"{N_ITER}Data_{len(EPSILONS)}Eps_{map_name}_"
+            f"{N_ITER}Data_{len(EPSILONS)}_eps_{map_name}_"
         )
         analyze_map(map_name, plot_prefix)
 

@@ -68,12 +68,26 @@ class CoupledMapLattice:
                 f"does not match n_maps={self.n_maps}"
             )
 
+    @classmethod
+    def generate_default_filename(
+        cls,
+        map_name: str,
+        n_maps: int,
+        n_steps: int,
+        coupling_strength: float,
+        seed: int | None,
+    ) -> str:
+        """Generate a default filename for CML containing hyperparameters."""
+        return (
+            f"cml_map={map_name}_{n_maps}_x_{n_steps}_"
+            f"eps={coupling_strength}_seed={seed or 'noseed'}.npz"
+        )
+
     @property
     def default_filename(self) -> Path:
         """Generate default filename containing the generation parameters."""
-        filename = (
-            f"cml_map={self.map_name}_{self.n_maps}_x_{self.n_steps}_"
-            f"eps={self.coupling_strength}_seed={self.seed or 'noseed'}.npz"
+        filename = CoupledMapLattice.generate_default_filename(
+            self.map_name, self.n_maps, self.n_steps, self.coupling_strength, self.seed
         )
         if self.output_dir:
             return self.output_dir / filename
