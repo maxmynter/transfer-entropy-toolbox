@@ -16,7 +16,7 @@ MATRIX_DIMS = 2
 VECTOR_DIMS = 1
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=512)
 def _discretize_1d_data(
     data: tuple[np.float64], bins: int | tuple[float, ...]
 ) -> tuple[IntArray, int]:
@@ -44,7 +44,7 @@ def _discretize_1d_data(
     return indices, len(edges) - 1
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=512)
 def _discretize_nd_data(
     data_tuple: tuple[tuple[float, ...], ...],
     bins_tuple: tuple[int | tuple[float, ...], ...],
