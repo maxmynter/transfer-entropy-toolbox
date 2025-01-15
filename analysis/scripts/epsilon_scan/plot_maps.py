@@ -1,13 +1,12 @@
 """Plot the Epsilon scan results."""
 
 import gc
-import os
-import tracemalloc
+import json
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-import psutil
 import seaborn as sns
 from eps_scan_constants import (
     EPS_DATA_DIR,
@@ -42,12 +41,28 @@ plt.rcParams.update(
 sns.set()
 
 
-def log_memory_usage(location: str):
-    """Log current memory usage."""
-    process = psutil.Process(os.getpid())
-    print(
-        f"Memory usage at {location}: {process.memory_info().rss / 1024 / 1024:.2f} MB"
-    )
+def save_results(results, save_path):
+    """Save results dictionary to numpy files."""
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Convert the results dict to a saveable format
+    save_dict = {key: results[key].tolist() for key in results}
+
+    # Save as JSON for better portability
+    with open(save_path, "w") as f:
+        json.dump(save_dict, f)
+
+
+def load_results(load_path):
+    """Load results dictionary from saved files."""
+    load_path = Path(load_path)
+
+    with open(load_path) as f:
+        loaded_dict = json.load(f)
+
+    # Convert back to numpy arrays
+    return {key: np.array(loaded_dict[key]) for key in loaded_dict}
 
 
 def plot_results(results, plot_prefix, n_maps, n_iter, epsilons, n_bins):  # noqa: PLR0913, Need these args here
@@ -114,7 +129,6 @@ def plot_measure(  # noqa: PLR0913, Need these args here
         )
     plt.xlabel(r"$\epsilon$")
     plt.ylabel(measure_name)
-    plt.legend()
     plt.tight_layout()
     plt.savefig(
         f"{plot_prefix}SchreiberReprod_{measure_name}_{n_maps}_maps_{n_iter}_steps.png",
@@ -133,16 +147,15 @@ def pairwise_tes(
     return te, nte, lognte
 
 
-def analyze_map(  # Script analysis takes some lines sometimes....
+def analyze_map(  # noqa: PLR0913 # Script analysis takes some lines sometimes....
     map_name,
     plot_prefix="",
     data_dir=EPS_DATA_DIR,
     add_noise_flag=True,
     gaussian_remap_flag=True,
+    save_results_to=None,
 ):
     """Run and plot analysis of chaotic map."""
-    tracemalloc.start()
-    log_memory_usage("Start of analyze_map")
     # Initialize results arrays
     results = {
         "te": np.zeros((len(EPSILONS), len(N_BINS))),
@@ -157,7 +170,6 @@ def analyze_map(  # Script analysis takes some lines sometimes....
 
     for e, eps in enumerate(EPSILONS):
         print(f"Processing epsilon {eps}")
-        log_memory_usage(f"Start of epsilon {eps}")
         # Load and process data
         data = CoupledMapLattice.load(
             data_dir
@@ -165,9 +177,7 @@ def analyze_map(  # Script analysis takes some lines sometimes....
                 map_name, N_MAPS, N_ITER, eps, SEED
             )
         )
-        log_memory_usage("After data load")
         lattice = data.lattice
-        log_memory_usage("After getting lattice")
 
         if add_noise_flag:
             lattice = noisify(
@@ -176,17 +186,14 @@ def analyze_map(  # Script analysis takes some lines sometimes....
                 amplitude=RELATIVE_NOISE_AMPLITUDE,
                 rng=rng,
             )
-            log_memory_usage("After adding noise")
 
         if gaussian_remap_flag:
             gaussian_samples = rng.normal(size=lattice.shape)
             lattice = remap_to(lattice, gaussian_samples, rng)
-            log_memory_usage("After gaussian remap")
             del gaussian_samples
             gc.collect()
 
         for b, n_bins in enumerate(N_BINS):
-            log_memory_usage(f"Start of bins {n_bins}")
             bins = np.linspace(np.min(lattice), np.max(lattice), n_bins + 1)
 
             te_vals = []
@@ -208,21 +215,10 @@ def analyze_map(  # Script analysis takes some lines sometimes....
             results["hnte_err"][e, b] = np.std(nte_vals)
             results["lognte_err"][e, b] = np.std(lognte_vals)
 
-            log_memory_usage(f"End of bins {n_bins}")
-
         del lattice
         del data
 
         gc.collect()
-        log_memory_usage(f"End of epsilon {eps}")
-
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics("lineno")
-        print("[ Top 10 memory users ]")
-        for stat in top_stats[:10]:
-            print(stat)
-
-    tracemalloc.stop()
     return results
 
 
@@ -237,15 +233,14 @@ def main():
 
     for map_name in maps:
         print(f"__________________{map_name}")
-        plot_prefix = (
-            str(PLOT_PATH)
-            + "/"
-            + (
-                f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
-                f"{N_ITER}Data_{len(EPSILONS)}_eps_{map_name}_"
-            )
+        prefix = (
+            f"Noise_{RELATIVE_NOISE_AMPLITUDE}_GaussianRemap_"
+            f"{N_ITER}Data_{len(EPSILONS)}eps_{map_name}_"
         )
+        plot_prefix = str(PLOT_PATH) + "/" + prefix
+        save_prefix = Path(EPS_DATA_DIR) / Path("te_by_eps/")
         results = analyze_map(map_name, plot_prefix)
+        save_results(results, save_prefix / "te_by_eps.json")
 
         plot_results(results, plot_prefix, N_MAPS, N_ITER, EPSILONS, N_BINS)
 
