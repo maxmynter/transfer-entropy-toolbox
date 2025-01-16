@@ -65,7 +65,7 @@ def _discretize_nd_data(
     )
 
 
-@jit(nopython=True)
+@jit(nopython=True, fastmath=True)
 def _discrete_univariate_entropy(
     data: IntArray, n_classes: list[int], at: int
 ) -> np.float64:
@@ -184,7 +184,7 @@ def entropy(
     return discrete_entropy(indices, n_classes, at)
 
 
-@jit(nopython=True)
+@jit(nopython=True, fastmath=True)
 def _discrete_bivariate_joint_entropy(
     data: IntArray, n_classes: list[int], at: tuple[int, int]
 ) -> np.float64:
