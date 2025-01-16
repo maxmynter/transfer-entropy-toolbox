@@ -131,7 +131,7 @@ def plot_measure(  # noqa: PLR0913, Need these args here
     plt.ylabel(measure_name)
     plt.tight_layout()
     plt.savefig(
-        f"{plot_prefix}SchreiberReprod_{measure_name}_{n_maps}_maps_{n_iter}_steps.png",
+        f"{plot_prefix}SchreiberReprod_{measure_name}_{n_maps}_maps.png",
         dpi=300,
     )
     plt.close()
