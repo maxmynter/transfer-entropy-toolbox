@@ -6,6 +6,7 @@ from typing import overload
 
 import numpy as np
 import numpy.typing as npt
+from numba import jit
 
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
@@ -64,6 +65,7 @@ def _discretize_nd_data(
     )
 
 
+@jit(nopython=True)
 def _discrete_univariate_entropy(
     data: IntArray, n_classes: list[int], at: int
 ) -> np.float64:
@@ -103,7 +105,7 @@ def discrete_entropy(
         n_classes = [n_classes] * n_vars
 
     if at is not None:
-        return _discrete_univariate_entropy(data, n_classes, at)
+        return np.float64(_discrete_univariate_entropy(data, n_classes, at))
     else:
         probs = np.empty(n_vars, dtype=np.float64)
         for i in range(n_vars):
@@ -182,16 +184,25 @@ def entropy(
     return discrete_entropy(indices, n_classes, at)
 
 
+@jit(nopython=True)
 def _discrete_bivariate_joint_entropy(
     data: IntArray, n_classes: list[int], at: tuple[int, int]
 ) -> np.float64:
     i, j = at
     n_steps, _ = data.shape
     hist = np.zeros((n_classes[i], n_classes[j]))
-    np.add.at(hist, (data[:, i], data[:, j]), 1)
+
+    for k in range(n_steps):
+        hist[data[k, i], data[k, j]] += 1
+
     p_xy = hist / n_steps
-    nonzero_mask = p_xy > 0
-    return np.float64(-np.sum(p_xy[nonzero_mask] * np.log(p_xy[nonzero_mask])))
+    entropy_sum = 0.0
+    for ii in range(p_xy.shape[0]):
+        for jj in range(p_xy.shape[1]):
+            if p_xy[ii, jj] > 0:
+                entropy_sum += p_xy[ii, jj] * np.log(p_xy[ii, jj])
+
+    return np.float64(-entropy_sum)
 
 
 @overload
@@ -233,7 +244,7 @@ def discrete_joint_entropy(
         n_classes = [n_classes] * n_vars
 
     if at is not None:
-        return _discrete_bivariate_joint_entropy(data, n_classes, at)
+        return np.float64(_discrete_bivariate_joint_entropy(data, n_classes, at))
 
     jent = np.zeros((n_vars, n_vars), dtype=np.float64)
     for i in range(n_vars):
