@@ -467,11 +467,12 @@ def mutual_information(
     idx = i.astype(np.int64)
     jdx = j.astype(np.int64)
 
-    mi = (h_x[idx] + h_x[jdx] - h_xy[idx, jdx]).astype(np.float64)
+    mi = np.float64(h_x[idx] + h_x[jdx] - h_xy[idx, jdx])
     if norm:
-        denominator = np.sqrt(np.multiply(h_x[i], h_x[j]))
-        mi = np.divide(mi, denominator, where=denominator != 0)
-
+        denominator = np.float64(np.sqrt(np.multiply(h_x[i], h_x[j])))
+        if np.any(denominator == 0):
+            raise ValueError("Zero entropy, cannot normalize mutual information.")
+        mi = np.divide(mi, denominator)
     return mi
 
 
