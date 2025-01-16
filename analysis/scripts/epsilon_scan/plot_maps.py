@@ -239,7 +239,9 @@ def main():
         )
         plot_prefix = str(PLOT_PATH) + "/" + prefix
         save_prefix = Path(EPS_DATA_DIR) / Path("te_by_eps/")
-        results = analyze_map(map_name, plot_prefix)
+        results = analyze_map(
+            map_name, plot_prefix, add_noise_flag=RELATIVE_NOISE_AMPLITUDE > 0
+        )
         save_results(results, save_prefix / "te_by_eps.json")
 
         plot_results(results, plot_prefix, N_MAPS, N_ITER, EPSILONS, N_BINS)
