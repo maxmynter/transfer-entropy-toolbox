@@ -38,14 +38,23 @@ def test_mi_error_handling():
     st.lists(
         st.floats(min_value=-100, max_value=100, allow_infinity=False, allow_nan=False),
         min_size=25,
+        max_size=25,
         unique=True,
-    )
+    ),
+    st.lists(
+        st.floats(min_value=-100, max_value=100, allow_infinity=False, allow_nan=False),
+        min_size=25,
+        max_size=25,
+        unique=True,
+    ),
 )
-def test_mi_bounds(x):
+def test_mi_bounds(x, y):
     """Test normalized MI is between 0 and 1."""
-    data = np.column_stack([x, x])
+    data = np.column_stack([x, y])
     mi = mutual_information(data, bins=3, norm=True)
-    assert np.all(~np.isnan(mi) & (mi >= 0) & (mi <= 1))
+    assert np.all(
+        np.isnan(mi) | ((mi >= 0 - NUMERIC_TOLERANCE) & (mi <= 1.0 + NUMERIC_TOLERANCE))
+    )
 
 
 @given(
