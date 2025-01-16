@@ -10,22 +10,14 @@ from eps_scan_constants import (
     N_MAPS,
     PLOT_PATH,
     RELATIVE_NOISE_AMPLITUDE,
+    maps,
 )
-
-from te_toolbox.systems.maps import BellowsMap, ExponentialMap, LogisticMap, TentMap
 
 from .plot_utils import analyze_map, plot_results, save_results
 
 
 def main():
     """Plot the Epsilon Scan results."""
-    maps = {
-        "LogisticMap(r=4)": LogisticMap(r=4),
-        "BellowsMap(r=5,b=6)": BellowsMap(r=5, b=6),
-        "ExponentialMap(r=4)": ExponentialMap(r=4),
-        "TentMap(r=2)": TentMap(r=2),
-    }
-
     for map_name in maps:
         print(f"__________________{map_name}")
         prefix = (

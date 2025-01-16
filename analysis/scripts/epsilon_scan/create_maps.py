@@ -1,15 +1,17 @@
 """Script to generate CML data for various maps and coupling strengths."""
 
-from eps_scan_constants import EPS_DATA_DIR, EPSILONS, N_ITER, N_MAPS, N_TRANSIENT, SEED
+from eps_scan_constants import (
+    EPS_DATA_DIR,
+    EPSILONS,
+    N_ITER,
+    N_MAPS,
+    N_TRANSIENT,
+    SEED,
+    maps,
+)
 
 from te_toolbox.systems.lattice import CMLConfig, CoupledMapLatticeGenerator
-from te_toolbox.systems.maps import (
-    BellowsMap,
-    ExponentialMap,
-    LogisticMap,
-    Map,
-    TentMap,
-)
+from te_toolbox.systems.maps import Map
 
 
 def create_cml(map_function: Map) -> None:
@@ -42,8 +44,6 @@ def create_cml(map_function: Map) -> None:
 
 def main():
     """Generate data for all maps."""
-    maps = [LogisticMap(r=4), BellowsMap(r=5, b=6), ExponentialMap(r=4), TentMap(r=2)]
-
     for map_function in maps:
         create_cml(map_function)
 
