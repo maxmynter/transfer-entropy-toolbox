@@ -1,12 +1,13 @@
+#include "discrete_entropy.h"
+#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
-namespace fast_entropy {
-    int add_numbers(int a , int b);
-}
+PYBIND11_MODULE(_fast_entropy, m) { // Make sure this matches your Python import
+  m.doc() = "Fast entropy calculations using C++";
 
-PYBIND11_MODULE(_fast_entropy, m){
-    m.doc()= "Addition Hello world example.";
-    m.def("add_numbers", &fast_entropy::add_numbers, "Add 2 nyumbers", py::arg("a"), py::arg("b"));
+  m.def("discrete_entropy", &fast_entropy::discrete_entropy,
+        "Calculate discrete entropy from class assignments",
+        py::arg("data").noconvert(), py::arg("n_classes"));
 }

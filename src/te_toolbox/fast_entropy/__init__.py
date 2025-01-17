@@ -1,5 +1,5 @@
 """Package for fast entropy calculations implemented in C++."""
 
-from ._fast_entropy import add_numbers
+from ._fast_entropy import discrete_entropy
 
-__all__ = ["add_numbers"]
+__all__ = ["discrete_entropy"]
