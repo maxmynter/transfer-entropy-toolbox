@@ -1,26 +1,20 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "pybind11"]
 build-backend = "hatchling.build"
 
 [project]
 name = "te-toolbox"
 version = "0.1.0"
-authors = [
-    {name = "Max Mynter"}
-]
+authors = [{ name = "Max Mynter" }]
 description = "A paper from my M.Sc. thesis about the problems of Transfer Entropy from discretized continuous time series."
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
-dependencies = [
-    "numpy",
-    "matplotlib",
-    "numba"
-]
+dependencies = ["numpy", "matplotlib", "numba"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff", "numpy-typing", "mypy"]
 legacy-tests = ["scipy", "scikit-learn", "pandas"]
-analysis=["seaborn"]
+analysis = ["seaborn"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -36,7 +30,22 @@ show-fixes = true
 exclude = ["tests/legacy_implementation/thesis_package.py"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "W", "C90", "N", "D", "UP", "PL", "RUF", "C4", "SIM", "TCH"]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "W",
+    "C90",
+    "N",
+    "D",
+    "UP",
+    "PL",
+    "RUF",
+    "C4",
+    "SIM",
+    "TCH",
+]
 ignore = ["D203", "D211", "D212", "D213"]
 
 [tool.hatch.build]
