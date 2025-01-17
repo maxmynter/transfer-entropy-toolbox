@@ -44,7 +44,7 @@ def create_cml(map_function: Map) -> None:
 
 def main():
     """Generate data for all maps."""
-    for map_function in maps:
+    for map_function in maps.values():
         create_cml(map_function)
 
 

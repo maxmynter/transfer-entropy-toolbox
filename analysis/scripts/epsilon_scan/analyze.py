@@ -12,8 +12,7 @@ from eps_scan_constants import (
     RELATIVE_NOISE_AMPLITUDE,
     maps,
 )
-
-from .plot_utils import analyze_map, plot_results, save_results
+from plot_utils import analyze_map, plot_results, save_results
 
 
 def main():
