@@ -5,3 +5,6 @@ __pycache__
 master_thesis_mynter.pdf
 plots/
 profiling.txt
+build/
+dist/
+*.so
