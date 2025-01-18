@@ -14,26 +14,23 @@ SURFACE_PLOT_DIR.mkdir(exist_ok=True, parents=True)
 SEED = 42
 
 N_TRANSIENT = 10**4
-N_MAPS = 25
-N_ITER = 10**4
+N_MAPS = 15
+N_ITER = 10000
 LAG = 1
 
 MIN_BINS = 2
-MAX_BINS = 30
-N_BINS = 3
+MAX_BINS = 80
+BIN_STEP = 2
 
-MIN_POW = 2
-LOGSPACE_BASE = 10
-N_LENS = 3
+N_BINS = int((MAX_BINS - MIN_BINS) / BIN_STEP)
 
-bin_range = np.arange(MIN_BINS, MAX_BINS, int((MAX_BINS - MIN_BINS) / N_BINS))
-length_range = np.logspace(
-    MIN_POW, np.log10(N_ITER), base=LOGSPACE_BASE, num=N_LENS, dtype=int
-)
+MIN_LEN = 30
+LEN_STEP = 10
+N_LENS = int((N_ITER - MIN_LEN) / LEN_STEP)
+
+bin_range = np.arange(MIN_BINS, MAX_BINS, BIN_STEP)
+length_range = np.arange(MIN_LEN, N_ITER, LEN_STEP)
 
 maps = {
-    # "LogisticMap(r=4)": LogisticMap(r=4),
-    # "BellowsMap(r=5,b=6)": BellowsMap(r=5, b=6),
-    # "ExponentialMap(r=4)": ExponentialMap(r=4),
     "TentMap(r=2)": TentMap(r=2),
 }

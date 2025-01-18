@@ -5,7 +5,9 @@ import numpy as np
 import seaborn as sns
 from surfaces_constant import (
     LAG,
+    N_BINS,
     N_ITER,
+    N_LENS,
     N_MAPS,
     N_TRANSIENT,
     SEED,
@@ -81,7 +83,8 @@ def plot_measure_surface(
     plt.tight_layout()
 
     plt.savefig(
-        SURFACE_PLOT_DIR / f"{measure_name.lower()}_surface.png",
+        SURFACE_PLOT_DIR
+        / f"{measure_name.lower()}x{N_MAPS}_surface_{N_LENS}data_{N_BINS}bins.png",
         dpi=300,
     )
     plt.close()
