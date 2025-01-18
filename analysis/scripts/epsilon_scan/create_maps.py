@@ -18,6 +18,7 @@ def create_cml(map_function: Map) -> None:
     """Generate CML data for a given map across different coupling strengths.
 
     Args:
+    ----
         map_function: Map to use for the CML
 
     """

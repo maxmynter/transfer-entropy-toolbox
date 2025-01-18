@@ -16,6 +16,7 @@ def noisify(
     """Add noise following a distribution to data.
 
     Args:
+    ----
         data: Input array of size (n_samples, n_variables)
         noise_distribution: Callable noise sampler or string name of distribution
         amplitude: Noise amplitude relative to data mean
@@ -66,11 +67,13 @@ def remap_to(
     Perform a rank-ordered remapping of  distribution onto data.
 
     Args:
+    ----
         data: Source data array of shape (n_timesteps, n_variables)
         distribution: Target distribution array of shape (n_timesteps, n_variables)
         rng: Optional random number generator for tie-breaking
 
     Returns:
+    -------
         Remapped array with distribution's values following data's temporal pattern
 
     """

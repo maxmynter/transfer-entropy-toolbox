@@ -98,6 +98,7 @@ class CoupledMapLattice:
         """Save lattice and metadata.
 
         Args:
+        ----
             filename: Output filename (optional, will use defaultif not provided)
 
         """
@@ -124,9 +125,11 @@ class CoupledMapLattice:
         """Load time series and metadata from npz file.
 
         Args:
+        ----
             filename: Path to npz file
 
         Returns:
+        -------
             CMLData object containing the loaded data
 
         """
@@ -153,6 +156,7 @@ class CoupledMapLatticeGenerator:
         """Initialize CML system.
 
         Args:
+        ----
             config: Configuration object
 
         """
@@ -162,7 +166,8 @@ class CoupledMapLatticeGenerator:
     def generate(self) -> CoupledMapLattice:
         """Generate time series from the CML.
 
-        Returns:
+        Returns
+        -------
             CoupledMapLattice object containing the generated system and metadata
 
         """
@@ -195,9 +200,11 @@ class CoupledMapLatticeGenerator:
         """Perform one step of the CML evolution.
 
         Args:
+        ----
             state: Current state array
 
         Returns:
+        -------
             Next state
 
         """

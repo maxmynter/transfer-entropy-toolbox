@@ -14,9 +14,11 @@ class Map(ABC):
         """Apply the map function.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Map result
 
         """
@@ -27,9 +29,11 @@ class Map(ABC):
         """Compute the derivative of the map at point(s) x.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Derivative of the map
 
         """
@@ -48,6 +52,7 @@ class TentMap(Map):
         """Initialize tent map.
 
         Args:
+        ----
             r: Growth parameter (default: 2.0
                consisten with doi.org/10.1103/PhysRevLett.85.461)
 
@@ -58,9 +63,11 @@ class TentMap(Map):
         """Apply tent map.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Tent map result
 
         """
@@ -82,6 +89,7 @@ class LogisticMap(Map):
         """Initialize logistic map.
 
         Args:
+        ----
             r: Growth parameter (default: 4.0 for chaotic regime)
 
         """
@@ -91,9 +99,11 @@ class LogisticMap(Map):
         """Apply logistic map.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Logistic map result
 
         """
@@ -115,6 +125,7 @@ class BellowsMap(Map):
         """Initialize bellows map.
 
         Args:
+        ----
             r: Map parameter (default: 5.0)
             b: Map parameter (default: 6.0) as in arxiv.org/pdf/2309.08449
 
@@ -126,9 +137,11 @@ class BellowsMap(Map):
         """Apply bellows map.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Bellows map result
 
         """
@@ -151,6 +164,7 @@ class ExponentialMap(Map):
         """Initialize exponential map.
 
         Args:
+        ----
             r: Growth parameter (default: 4.0)
 
         """
@@ -160,9 +174,11 @@ class ExponentialMap(Map):
         """Apply exponential map.
 
         Args:
+        ----
             x: Input array
 
         Returns:
+        -------
             Exponential map result
 
         """
