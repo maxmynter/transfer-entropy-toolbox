@@ -8,3 +8,4 @@ profiling.txt
 build/
 dist/
 *.so
+.cache/
