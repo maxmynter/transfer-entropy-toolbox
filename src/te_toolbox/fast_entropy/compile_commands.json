@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/build",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -D_fast_entropy_EXPORTS -I/Users/maxmynter/Desktop/projects/thesis-paper/.venv/lib/python3.12/site-packages/numpy/_core/include -I/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src -isystem \"/Users/maxmynter/Library/Application Support/uv/python/cpython-3.12.7-macos-aarch64-none/include/python3.12\" -isystem /opt/homebrew/include  -O3 -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIC -fvisibility=hidden -flto -o CMakeFiles/_fast_entropy.dir/src/bindings.cpp.o -c /Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/bindings.cpp",
+  "file": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/bindings.cpp",
+  "output": "CMakeFiles/_fast_entropy.dir/src/bindings.cpp.o"
+},
+{
+  "directory": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/build",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -D_fast_entropy_EXPORTS -I/Users/maxmynter/Desktop/projects/thesis-paper/.venv/lib/python3.12/site-packages/numpy/_core/include -I/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src -isystem \"/Users/maxmynter/Library/Application Support/uv/python/cpython-3.12.7-macos-aarch64-none/include/python3.12\" -isystem /opt/homebrew/include  -O3 -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIC -fvisibility=hidden -flto -o CMakeFiles/_fast_entropy.dir/src/discrete_entropy.cpp.o -c /Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/discrete_entropy.cpp",
+  "file": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/discrete_entropy.cpp",
+  "output": "CMakeFiles/_fast_entropy.dir/src/discrete_entropy.cpp.o"
+},
+{
+  "directory": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/build",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -D_fast_entropy_EXPORTS -I/Users/maxmynter/Desktop/projects/thesis-paper/.venv/lib/python3.12/site-packages/numpy/_core/include -I/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src -isystem \"/Users/maxmynter/Library/Application Support/uv/python/cpython-3.12.7-macos-aarch64-none/include/python3.12\" -isystem /opt/homebrew/include  -O3 -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIC -fvisibility=hidden -flto -o CMakeFiles/_fast_entropy.dir/src/multivar_entropy.cpp.o -c /Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/multivar_entropy.cpp",
+  "file": "/Users/maxmynter/Desktop/projects/thesis-paper/src/te_toolbox/fast_entropy/src/multivar_entropy.cpp",
+  "output": "CMakeFiles/_fast_entropy.dir/src/multivar_entropy.cpp.o"
+}
+]
