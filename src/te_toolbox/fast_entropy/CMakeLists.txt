@@ -19,6 +19,7 @@ endif()
 pybind11_add_module(_fast_entropy
     src/bindings.cpp
     src/discrete_entropy.cpp
+    src/multivar_entropy.cpp
 )
 
 # Add include directories
