@@ -105,15 +105,16 @@ def plot_measure_surface(
 ):
     """Plot measure surface using trisurf with customizable plot parameters."""
     x_vals, y_vals = np.meshgrid(bins, lengths)
-    fig = plt.figure(figsize=plot_kwargs.get("figsize", (10, 8)))
-    ax = fig.add_subplot(111, projection="3d")
+    fig = plt.figure(figsize=plot_kwargs.get("figsize", (12, 8)))
+    ax = fig.add_subplot(111, projection="3d", computed_zorder=False)
 
     plot_params = {
         "vmin": 0,
         "cmap": "viridis",
-        "alpha": 0.9,
-        "linewidth": 0,
+        "alpha": 0.75,
+        "linewidth": 0.5,
         "antialiased": True,
+        "shade": True,
     }
     plot_params.update(plot_kwargs.get("surface_params", {}))
 
@@ -123,7 +124,9 @@ def plot_measure_surface(
     ax.set_ylabel(plot_kwargs.get("ylabel", "Sample length"))
     ax.set_zlabel(plot_kwargs.get("zlabel", measure_name), rotation=90)
 
-    if plot_kwargs.get("add_colorbar", True):
+    ax.view_init(elev=45, azim=-80)
+
+    if plot_kwargs.get("add_colorbar", False):
         fig.colorbar(surface, ax=ax, shrink=0.5, aspect=5)
 
     plt.tight_layout()
@@ -132,7 +135,10 @@ def plot_measure_surface(
         "filename",
         f"{measure_name.lower()}x{N_MAPS}_surface_{N_LENS}data_{N_BINS}bins.png",
     )
-    plt.savefig(SURFACE_PLOT_DIR / filename, dpi=plot_kwargs.get("dpi", 300))
+    plt.savefig(
+        SURFACE_PLOT_DIR / filename,
+        dpi=plot_kwargs.get("dpi", 300),
+    )
     plt.close()
 
 
@@ -170,7 +176,7 @@ def main():
             surfaces = load_surfaces(filename)
 
         # Plot surfaces with default parameters
-        plot_all_surfaces(surfaces)
+        plot_all_surfaces(surfaces, {})
 
 
 if __name__ == "__main__":
