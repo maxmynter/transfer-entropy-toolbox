@@ -39,12 +39,6 @@ plt.rcParams.update(
 sns.set_style("whitegrid")
 
 
-def avg_upper_tri(matrix: np.ndarray):
-    """Average upper triangular (left-to-right) elements of a 2D numpy array."""
-    upper_tri = np.triu_indices(matrix.shape[0], k=1)
-    return np.mean(matrix[upper_tri])
-
-
 def generate_data(map_func):
     """Generate CML data using constants."""
     config = CMLConfig(
@@ -66,18 +60,29 @@ def compute_surfaces(data: np.ndarray) -> dict:
     }
 
     for i, length in enumerate(length_range):
-        print(f"Processing length {length}")
-        data_subset = data[:length]
+        print(f"Processing length {int(length)}")
+        data_subset = data[: int(length)]
         for j, n_bins in enumerate(bin_range):
             bins = np.linspace(np.min(data_subset), np.max(data_subset), n_bins + 1)
-            te = avg_upper_tri(transfer_entropy(data_subset, bins, LAG))
-            nte = avg_upper_tri(normalized_transfer_entropy(data_subset, bins, LAG))
-            lognte = avg_upper_tri(
-                logn_normalized_transfer_entropy(data_subset, bins, LAG)
-            )
-            surfaces["TE"][i, j] = te
-            surfaces["NTE"][i, j] = nte
-            surfaces["logNTE"][i, j] = lognte
+
+            # Only compute TEs for adjacent pairs
+            te_vals = []
+            nte_vals = []
+            lognte_vals = []
+
+            for k in range(N_MAPS - 1):
+                pair_data = data_subset[:, [k, k + 1]]
+                te_vals.append(transfer_entropy(pair_data, bins, LAG, at=(1, 0)))
+                nte_vals.append(
+                    normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
+                )
+                lognte_vals.append(
+                    logn_normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
+                )
+
+            surfaces["TE"][i, j] = np.mean(te_vals)
+            surfaces["NTE"][i, j] = np.mean(nte_vals)
+            surfaces["logNTE"][i, j] = np.mean(lognte_vals)
 
     return surfaces
 
