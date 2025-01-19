@@ -138,6 +138,7 @@ def plot_measure_surface(
     plt.savefig(
         SURFACE_PLOT_DIR / filename,
         dpi=plot_kwargs.get("dpi", 300),
+        bbox_inches="tight",
     )
     plt.close()
 
