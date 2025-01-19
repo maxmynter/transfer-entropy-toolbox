@@ -14,23 +14,22 @@ SURFACE_PLOT_DIR.mkdir(exist_ok=True, parents=True)
 SEED = 42
 EPS = 0.5
 
-N_TRANSIENT = 10**4
-N_MAPS = 15
+N_TRANSIENT = 10**5
+N_MAPS = 50
 N_ITER = 5 * 10**3
 LAG = 1
 
 MIN_BINS = 2
-MAX_BINS = 75
-BIN_STEP = 2
+MAX_BINS = 150
+BIN_STEP = 1
 
 N_BINS = int((MAX_BINS - MIN_BINS) / BIN_STEP)
 
-MIN_LEN = 30
-LEN_STEP = 30
-N_LENS = int((N_ITER - MIN_LEN) / LEN_STEP)
+MIN_LEN = 50
+N_LENS = 100
 
 bin_range = np.arange(MIN_BINS, MAX_BINS, BIN_STEP)
-length_range = np.arange(MIN_LEN, N_ITER, LEN_STEP)
+length_range = np.geomspace(MIN_LEN, N_ITER, num=N_LENS)
 
 maps = {
     "TentMap(r=2)": TentMap(r=2),
