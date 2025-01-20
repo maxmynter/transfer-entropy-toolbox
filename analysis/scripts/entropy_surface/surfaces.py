@@ -14,6 +14,7 @@ from surfaces_constant import (
     N_MAPS,
     N_TRANSIENT,
     SEED,
+    SURFACE_DATA_DIR,
     SURFACE_PLOT_DIR,
     bin_range,
     length_range,
@@ -26,6 +27,10 @@ from te_toolbox.entropies import (
     transfer_entropy,
 )
 from te_toolbox.systems.lattice import CMLConfig, CoupledMapLatticeGenerator
+
+NORM_STD = "sig_by_mu"
+MEAN = "mean"
+
 
 # Configure plotting
 plt.rcParams.update(
@@ -55,7 +60,10 @@ def generate_data(map_func):
 def compute_surfaces(data: np.ndarray) -> dict:
     """Compute TE surfaces for different measures."""
     surfaces = {
-        name: np.zeros((len(length_range), len(bin_range)))
+        name: {
+            NORM_STD: np.zeros((len(length_range), len(bin_range))),
+            MEAN: np.zeros((len(length_range), len(bin_range))),
+        }
         for name in ["TE", "NTE", "logNTE"]
     }
 
@@ -80,23 +88,35 @@ def compute_surfaces(data: np.ndarray) -> dict:
                     logn_normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
                 )
 
-            surfaces["TE"][i, j] = np.mean(te_vals)
-            surfaces["NTE"][i, j] = np.mean(nte_vals)
-            surfaces["logNTE"][i, j] = np.mean(lognte_vals)
+            te_mean = np.mean(te_vals)
+            nte_mean = np.mean(nte_vals)
+            lognte_mean = np.mean(lognte_vals)
+            surfaces["TE"][NORM_STD][i, j], surfaces["TE"][MEAN][i, j] = (
+                np.std(te_vals) / te_mean if te_mean > 0 else np.nan,
+                te_mean,
+            )
+            surfaces["NTE"][NORM_STD][i, j], surfaces["NTE"][MEAN][i, j] = (
+                np.std(nte_vals) / nte_mean if nte_mean > 0 else np.nan,
+                nte_mean,
+            )
+            surfaces["logNTE"][NORM_STD][i, j], surfaces["logNTE"][MEAN][i, j] = (
+                np.std(lognte_vals) / lognte_mean if lognte_mean > 0 else np.nan,
+                lognte_mean,
+            )
 
     return surfaces
 
 
 def save_surfaces(surfaces: dict, filename: str):
     """Save computed surfaces to a pickle file."""
-    save_path = SURFACE_PLOT_DIR / filename
+    save_path = SURFACE_DATA_DIR / filename
     with open(save_path, "wb") as f:
         pickle.dump(surfaces, f)
 
 
 def load_surfaces(filename: str) -> dict:
     """Load computed surfaces from a pickle file."""
-    load_path = SURFACE_PLOT_DIR / filename
+    load_path = SURFACE_DATA_DIR / filename
     with open(load_path, "rb") as f:
         return pickle.load(f)
 
@@ -106,6 +126,7 @@ def plot_measure_surface(
     bins: np.ndarray,
     lengths: np.ndarray,
     measure_name: str,
+    filename: str,
     **plot_kwargs,
 ):
     """Plot measure surface using trisurf with customizable plot parameters."""
@@ -115,6 +136,7 @@ def plot_measure_surface(
 
     plot_params = {
         "vmin": 0,
+        "vmax": np.nanmax(measure_vals) * 1.05,
         "cmap": "viridis",
         "alpha": 0.75,
         "linewidth": 0.5,
@@ -136,10 +158,6 @@ def plot_measure_surface(
 
     plt.tight_layout()
 
-    filename = plot_kwargs.get(
-        "filename",
-        f"{measure_name.lower()}x{N_MAPS}_surface_{N_LENS}data_{N_BINS}bins.png",
-    )
     plt.savefig(
         SURFACE_PLOT_DIR / filename,
         dpi=plot_kwargs.get("dpi", 300),
@@ -162,7 +180,23 @@ def plot_all_surfaces(surfaces, plot_kwargs):
         plot_kwargs = {}
 
     for name, surface in surfaces.items():
-        plot_measure_surface(surface, bin_range, length_range, name, **plot_kwargs)
+        filename = f"{name.lower()}x{N_MAPS}_surface_{N_LENS}data_{N_BINS}bins.png"
+        plot_measure_surface(
+            surface[MEAN],
+            bin_range,
+            length_range,
+            name,
+            f"{MEAN}_{filename}",
+            **plot_kwargs,
+        )
+        plot_measure_surface(
+            surface[NORM_STD],
+            bin_range,
+            length_range,
+            name,
+            f"{NORM_STD}_{filename}",
+            **plot_kwargs,
+        )
 
 
 def main():
@@ -174,7 +208,7 @@ def main():
             f"_surface_{N_LENS}data_{N_BINS}bins.pkl"
         )
         # Check if saved surfaces exist
-        if not (SURFACE_PLOT_DIR / filename).exists():
+        if not (SURFACE_DATA_DIR / filename).exists():
             print("Computing and saving surfaces...")
             surfaces = compute_and_save_surfaces(map_name, filename)
         else:

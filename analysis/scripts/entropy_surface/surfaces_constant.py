@@ -6,8 +6,9 @@ import numpy as np
 
 from te_toolbox.systems import TentMap
 
-EPS_DATA_DIR = Path("analysis/data/epsilon_scan/")
-EPS_DATA_DIR.mkdir(exist_ok=True, parents=True)
+SURFACE_DATA_DIR = Path("analysis/data/entropy_surface/")
+SURFACE_DATA_DIR.mkdir(exist_ok=True, parents=True)
+
 SURFACE_PLOT_DIR = Path("analysis/plots/entropy_surface/")
 SURFACE_PLOT_DIR.mkdir(exist_ok=True, parents=True)
 
