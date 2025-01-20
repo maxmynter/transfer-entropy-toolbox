@@ -15,6 +15,7 @@ dependencies = ["numpy", "matplotlib", "numba"]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff", "numpy-typing", "mypy"]
 legacy-tests = ["scipy", "scikit-learn", "pandas"]
 analysis = ["seaborn"]
+binning = ["scikit-learn"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
