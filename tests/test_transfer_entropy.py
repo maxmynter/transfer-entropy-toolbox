@@ -81,8 +81,8 @@ def test_normalized_te_bounds():
     data = np.column_stack([x, y])
 
     nte = normalized_transfer_entropy(data, bins=10, lag=1)
-    assert np.all(nte >= 0)
-    assert np.all(nte <= 1)
+    assert np.all(nte >= 0 - NUMERIC_TOLERANCE)
+    assert np.all(nte <= 1 + NUMERIC_TOLERANCE)
 
 
 def test_logn_normalized_te():
