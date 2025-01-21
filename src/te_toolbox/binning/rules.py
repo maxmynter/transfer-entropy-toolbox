@@ -122,6 +122,5 @@ def freedman_diaconis_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.floa
     # Calculate bin width
     h = 2 * iqr / np.cbrt(len(data))
 
-    # Create bins from min to max with width h
     bins = np.arange(np.min(data), np.max(data) + h, h)
     return bins
