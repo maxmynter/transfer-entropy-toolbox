@@ -100,3 +100,28 @@ def scotts_rule_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     h = 3.49 * np.std(data) / np.cbrt(len(data))
     bins = np.arange(np.min(data), np.max(data) + h, h)
     return bins
+
+
+def freedman_diaconis_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """
+    Calculate bin edges using Freedman-Diaconis rule: h = 2 * IQR(X) / n^(1/3).
+
+    Args:
+    ----
+        data: Input array of values
+
+    Returns:
+    -------
+        Array of bin edges
+
+    """
+    # Calculate IQR
+    q75, q25 = np.percentile(data, [75, 25])
+    iqr = q75 - q25
+
+    # Calculate bin width
+    h = 2 * iqr / np.cbrt(len(data))
+
+    # Create bins from min to max with width h
+    bins = np.arange(np.min(data), np.max(data) + h, h)
+    return bins

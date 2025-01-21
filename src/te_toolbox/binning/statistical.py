@@ -223,3 +223,43 @@ def bic_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
     """
     return optimize_bins(data, bic_cost, minimize=True)
+
+
+def small_sample_akaike_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """
+    Find optimal bins using AIC with small sample correction.
+
+    Uses the corrected AIC formula: AICc = AIC + 2k(k+1)/(n-k-1)
+    where k is the number of bins and n is the sample size.
+
+    Args:
+    ----
+        data: Input data array
+
+    Returns:
+    -------
+        Array of optimal bin edges
+
+    """
+
+    def aicc_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
+        """AIC cost function with small sample correction (to be minimized)."""
+        n = np.sum(hist)
+        h = bins[1] - bins[0]
+        m = len(hist)  # number of bins = k in the formula
+        nonzero_hist = hist[hist > 0]
+
+        # Standard AIC term
+        aic = (
+            m
+            + n * np.log(n)
+            + n * np.log(h)
+            - np.sum(nonzero_hist * np.log(nonzero_hist))
+        )
+
+        # Small sample correction term
+        correction = 2 * m * (m + 1) / (n - m - 1) if n > m + 1 else float("inf")
+
+        return aic + correction
+
+    return optimize_bins(data, aicc_cost, minimize=True)
