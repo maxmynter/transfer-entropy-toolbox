@@ -16,20 +16,21 @@ SEED = 42
 EPS = 0.5
 
 N_TRANSIENT = 10**5
-N_MAPS = 50
-N_ITER = 5 * 10**3
+N_MAPS = 20
+N_ITER = 10 * 10**3
 LAG = 1
 
 MIN_BINS = 2
-MAX_BINS = 150
-BIN_STEP = 1
+MAX_BINS = 350
+BIN_STEP = 10
 
-N_BINS = int((MAX_BINS - MIN_BINS) / BIN_STEP)
+N_BINS = 100  # int((MAX_BINS - MIN_BINS) / BIN_STEP)
 
 MIN_LEN = 50
 N_LENS = 100
 
-bin_range = np.arange(MIN_BINS, MAX_BINS, BIN_STEP)
+# bin_range = np.arange(MIN_BINS, MAX_BINS, BIN_STEP)
+bin_range = np.floor(np.geomspace(MIN_BINS, MAX_BINS, num=N_BINS)).astype(int)
 length_range = np.geomspace(MIN_LEN, N_ITER, num=N_LENS)
 
 maps = {
