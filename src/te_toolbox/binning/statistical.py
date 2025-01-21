@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Callable
-from math import lgamma as loggamma
+from math import lgamma, log
 
 import numpy as np
 import numpy.typing as npt
@@ -35,7 +35,7 @@ def optimize_bins(
     """
     n = len(data)
     n_min = max(2, int(np.sqrt(n) * 0.1))  # Start with a reasonable minimum
-    n_max = int(np.sqrt(n) * 10)  # Upper limit as safety
+    n_max = min(n, int(np.sqrt(n) * 10))  # Upper limit as safety
 
     best_cost = float("inf") if minimize else float("-inf")
     last_cost = best_cost
@@ -43,7 +43,7 @@ def optimize_bins(
     worse_count = 0
 
     for n_bins in range(n_min, n_max):
-        bins = np.linspace(np.min(data), np.max(data), n_bins + 1)
+        bins = np.linspace(np.min(data), np.max(data), n_bins)
         hist, _ = np.histogram(data, bins)
         cost = cost_function(hist, bins)
 
@@ -63,7 +63,7 @@ def optimize_bins(
             f"Warning: reached maximum_bins ({n_max}) without identifying optimum."
         )
 
-    return np.linspace(np.min(data), np.max(data), best_n + 1)
+    return np.linspace(np.min(data), np.max(data), best_n)
 
 
 def knuth_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
@@ -81,13 +81,13 @@ def knuth_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> fl
 
     """
     n = np.sum(hist)
-    m = len(hist)
-    return (
-        n * np.log(m)
-        + loggamma(m / 2)
-        - loggamma(n + m / 2)
-        - m * loggamma(0.5)
-        + np.sum(loggamma(hist + 0.5))
+    m = len(bins) - 1
+    return float(
+        n * log(m)
+        + lgamma(m / 2)
+        - lgamma(n + m / 2)
+        - m * lgamma(0.5)
+        + sum(lgamma(count + 0.5) for count in hist)
     )
 
 
@@ -109,7 +109,7 @@ def shimazaki_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -
     h = bins[1] - bins[0]
     mean = np.mean(hist)
     var = np.var(hist)
-    return (2 * mean - var) / (h * n) ** 2
+    return float((2 * mean - var) / (h * n) ** 2)
 
 
 def aic_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
@@ -127,12 +127,24 @@ def aic_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> floa
 
     """
     n = np.sum(hist)
-    h = bins[1] - bins[0]
     m = len(hist)
+    h = bins[1] - bins[0]
     nonzero_hist = hist[hist > 0]
-    return (
+    return float(
         m + n * np.log(n) + n * np.log(h) - np.sum(nonzero_hist * np.log(nonzero_hist))
     )
+
+
+def aicc_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
+    """AIC cost function with small sample correction (to be minimized)."""
+    n = np.sum(hist)
+    m = len(bins) - 1
+
+    aic = aic_cost(hist, bins)
+    if n > m + 1:
+        correction = 2 * m * (m + 1) / (n - m - 1)
+        return float(aic + correction)
+    return float("inf")
 
 
 def bic_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
@@ -153,7 +165,7 @@ def bic_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> floa
     h = bins[1] - bins[0]
     m = len(hist)
     nonzero_hist = hist[hist > 0]
-    return (
+    return float(
         np.log(n) / 2 * m
         + n * np.log(n)
         + n * np.log(h)
@@ -241,25 +253,4 @@ def small_sample_akaike_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.fl
         Array of optimal bin edges
 
     """
-
-    def aicc_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
-        """AIC cost function with small sample correction (to be minimized)."""
-        n = np.sum(hist)
-        h = bins[1] - bins[0]
-        m = len(hist)  # number of bins = k in the formula
-        nonzero_hist = hist[hist > 0]
-
-        # Standard AIC term
-        aic = (
-            m
-            + n * np.log(n)
-            + n * np.log(h)
-            - np.sum(nonzero_hist * np.log(nonzero_hist))
-        )
-
-        # Small sample correction term
-        correction = 2 * m * (m + 1) / (n - m - 1) if n > m + 1 else float("inf")
-
-        return aic + correction
-
     return optimize_bins(data, aicc_cost, minimize=True)
