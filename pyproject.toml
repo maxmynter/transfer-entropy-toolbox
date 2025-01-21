@@ -14,7 +14,7 @@ dependencies = ["numpy", "matplotlib", "numba"]
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff", "numpy-typing", "mypy"]
 legacy-tests = ["scipy", "scikit-learn", "pandas"]
-analysis = ["seaborn"]
+analysis = ["seaborn", "joblib"]
 binning = ["scikit-learn"]
 
 [tool.pytest.ini_options]

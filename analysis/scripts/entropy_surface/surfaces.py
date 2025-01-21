@@ -1,10 +1,12 @@
 """Generate TE by sample size and binning detail surface plots."""
 
 import pickle
+from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from joblib import Parallel, delayed
 from surfaces_constant import (
     EPS,
     LAG,
@@ -57,7 +59,36 @@ def generate_data(map_func):
     return CoupledMapLatticeGenerator(config).generate().lattice
 
 
-def compute_surfaces(data: np.ndarray) -> dict:
+def compute_te_for(data, length, n_bins):
+    """Compute TE values for length x bins combination."""
+    data_subset = data[: int(length)]
+    bins = np.linspace(np.min(data_subset), np.max(data_subset), n_bins + 1)
+
+    te_vals = []
+    nte_vals = []
+    lognte_vals = []
+
+    for k in range(N_MAPS - 1):
+        pair_data = data_subset[:, [k, k + 1]]
+        te_vals.append(transfer_entropy(pair_data, bins, LAG, at=(1, 0)))
+        nte_vals.append(normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0)))
+        lognte_vals.append(
+            logn_normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
+        )
+
+    results = {}
+    for vals, keys in [(te_vals, "TE"), (nte_vals, "NTE"), (lognte_vals, "logNTE")]:
+        mean_val = np.mean(vals)
+        std_val = np.std(vals)
+        results[keys] = {
+            MEAN: mean_val,
+            NORM_STD: std_val / mean_val if mean_val != 0 else np.nan,
+        }
+
+    return length, n_bins, results
+
+
+def compute_surfaces(data: np.ndarray, n_jobs=-1) -> dict:
     """Compute TE surfaces for different measures."""
     surfaces = {
         name: {
@@ -67,42 +98,19 @@ def compute_surfaces(data: np.ndarray) -> dict:
         for name in ["TE", "NTE", "logNTE"]
     }
 
-    for i, length in enumerate(length_range):
-        print(f"Processing length {int(length)}")
-        data_subset = data[: int(length)]
-        for j, n_bins in enumerate(bin_range):
-            bins = np.linspace(np.min(data_subset), np.max(data_subset), n_bins + 1)
+    params = list(product(range(len(length_range)), range(len(bin_range))))
 
-            # Only compute TEs for adjacent pairs
-            te_vals = []
-            nte_vals = []
-            lognte_vals = []
+    results = Parallel(n_jobs=n_jobs, verbose=10)(
+        delayed(compute_te_for)(data, length_range[i], bin_range[j]) for i, j in params
+    )
 
-            for k in range(N_MAPS - 1):
-                pair_data = data_subset[:, [k, k + 1]]
-                te_vals.append(transfer_entropy(pair_data, bins, LAG, at=(1, 0)))
-                nte_vals.append(
-                    normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
-                )
-                lognte_vals.append(
-                    logn_normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
-                )
+    for length, n_bins, measures in results:
+        i = np.where(length_range == length)[0][0]
+        j = np.where(bin_range == n_bins)[0][0]
 
-            te_mean = np.mean(te_vals)
-            nte_mean = np.mean(nte_vals)
-            lognte_mean = np.mean(lognte_vals)
-            surfaces["TE"][NORM_STD][i, j], surfaces["TE"][MEAN][i, j] = (
-                np.std(te_vals) / te_mean if te_mean > 0 else np.nan,
-                te_mean,
-            )
-            surfaces["NTE"][NORM_STD][i, j], surfaces["NTE"][MEAN][i, j] = (
-                np.std(nte_vals) / nte_mean if nte_mean > 0 else np.nan,
-                nte_mean,
-            )
-            surfaces["logNTE"][NORM_STD][i, j], surfaces["logNTE"][MEAN][i, j] = (
-                np.std(lognte_vals) / lognte_mean if lognte_mean > 0 else np.nan,
-                lognte_mean,
-            )
+        for measure_name, measure_vals in measures.items():
+            surfaces[measure_name][MEAN][i, j] = measure_vals[MEAN]
+            surfaces[measure_name][NORM_STD][i, j] = measure_vals[NORM_STD]
 
     return surfaces
 
