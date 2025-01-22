@@ -105,10 +105,11 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
 
             last_avg = current_avg
     else:
-        logger.warning(
-            f"Warning: reached maximum_bins ({n_max}) without identifying optimum "
-            f"using method: {method}."
-        )
+        if n_max < n:
+            logger.warning(
+                f"Warning: exited bin optimization after {n_max} bins without "
+                f"identifying optimum. Method: {method}."
+            )
 
     return np.linspace(np.min(data), np.max(data), best_n)
 
