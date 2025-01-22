@@ -13,7 +13,6 @@ from te_toolbox.binning import (
     rice_rule_bins,
     scotts_rule_bins,
     shimazaki_bins,
-    small_sample_akaike_bins,
     sqrt_n_bins,
     sturges_bins,
 )
@@ -49,7 +48,6 @@ BINNING_METHODS = {
     "Rice": rice_rule_bins,
     "Scott": scotts_rule_bins,
     "Shimazaki": shimazaki_bins,
-    "Small-Sample AIC": small_sample_akaike_bins,
     "Sqrt-n": sqrt_n_bins,
     "Sturges": sturges_bins,
 }
