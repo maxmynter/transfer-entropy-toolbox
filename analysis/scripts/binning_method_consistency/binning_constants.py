@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import numpy as np
-from max_entropy_bins import max_logntent_bins, max_ntent_bins, max_tent_bins
+from metric_enum import Metric
 
 from te_toolbox.binning import (
     aic_bins,
@@ -35,9 +35,18 @@ N_TRANSIENT = 10**5
 N_MAPS = 50
 LAG = 1
 MIN_SAMPLE = 50
-MAX_SAMPLE = 1.5 * 10**4
-N_SAMPLE = 100
+MAX_SAMPLE = 1.5 * 10**3
+N_SAMPLE = 10
 SAMPLE_SIZES = [int(i) for i in np.geomspace(MIN_SAMPLE, MAX_SAMPLE, N_SAMPLE)]
+
+METRICS = [Metric.TE, Metric.LOGNTE]  # [Metric.TE, Metric.HNTE, Metric.LOGNTE]
+
+# File naming patterns
+RESULTS_FILE_PATTERN = "binning_results_size_{}.pkl"
+CRITERION_BINS_PATTERN = "bin_criterion_size_comparison_{}.png"
+
+# Map Configuration
+DEFAULT_MAP = TentMap(r=2)
 
 # Binning Methods
 BINNING_METHODS = {
@@ -51,14 +60,8 @@ BINNING_METHODS = {
     "Shimazaki": shimazaki_bins,
     "Sqrt-n": sqrt_n_bins,
     "Sturges": sturges_bins,
-    "Max TE": max_tent_bins,
-    "Max NTE": max_ntent_bins,
-    "Max logNTE": max_logntent_bins,
+    **{"Max " + str(metric): metric.maximising_bins for metric in METRICS},
 }
-
-# Map Configuration
-DEFAULT_MAP = TentMap(r=2)
-
 # Plot Configuration
 PLOT_STYLES = {
     "figure.figsize": (15, 8),
@@ -67,9 +70,3 @@ PLOT_STYLES = {
     "mathtext.fontset": "stix",
     "text.usetex": True,
 }
-
-# File naming patterns
-RESULTS_FILE_PATTERN = "binning_results_size_{}.pkl"
-VIOLIN_PLOT_PATTERN = "binning_comparison_{}_size_{}.png"
-STD_PLOT_PATTERN = "std_comparison_{}.png"
-CRITERION_BINS_PATTERN = "bin_criterion_size_comparison_{}.png"

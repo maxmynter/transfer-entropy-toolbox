@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from te_toolbox.binning.statistical import optimize_bins
 from te_toolbox.entropies import (
     logn_normalized_transfer_entropy,
     normalized_transfer_entropy,
@@ -10,22 +11,26 @@ from te_toolbox.entropies import (
 
 
 def max_tent(tent, data: np.ndarray, lag=1):
-    """Get tent maximising bins."""
-    data = data.reshape(-1, 2)
-    last_te = -float("inf")
-    max_bins = np.array([])
-    data_min = np.min(data)
-    data_max = np.max(data)
+    """Get tent maximising bins using te_toolbox.binning optimizer."""
+    data_2d = data.reshape(-1, 2)
 
-    for n_edges in range(3, len(data)):
-        bins = np.linspace(data_min, data_max, n_edges)
-        te = tent(data, bins, lag, at=(1, 0))
-        if te > last_te:
-            max_bins = bins
-            last_te = te
-        else:
-            return max_bins
-    return max_bins
+    def cost(_, bins):
+        try:
+            return tent(data_2d, bins, lag, at=(1, 0))
+        except Exception:
+            print("Error calculating Max Entropy")
+            return float("inf")
+
+    tent_maximising_bins = optimize_bins(
+        data=data_2d.flatten(),
+        cost_function=cost,
+        minimize=False,
+        window_size=20,
+        trend_patience=10,
+        stationary_threshold=1e-4,
+        method=tent.__name__,
+    )
+    return tent_maximising_bins
 
 
 def max_tent_bins(data):

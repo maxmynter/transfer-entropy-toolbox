@@ -12,6 +12,7 @@ from binning_constants import (
     DEFAULT_MAP,
     EPS,
     LAG,
+    METRICS,
     N_MAPS,
     N_TRANSIENT,
     PLOT_DIR,
@@ -21,12 +22,8 @@ from binning_constants import (
     SEED,
 )
 from joblib import Parallel, delayed
+from metric_enum import Metric
 
-from te_toolbox.entropies import (
-    logn_normalized_transfer_entropy,
-    normalized_transfer_entropy,
-    transfer_entropy,
-)
 from te_toolbox.systems.lattice import CMLConfig, CoupledMapLatticeGenerator
 
 # Configure plotting
@@ -49,9 +46,7 @@ def generate_cml_data(sample_size):
 
 def compute_te_for_method(data, method_func):
     """Compute TE values using specified binning method."""
-    te_vals = []
-    nte_vals = []
-    lognte_vals = []
+    metric_vals = {metric: [] for metric in METRICS}
 
     for k in range(N_MAPS - 1):
         pair_data = data[:, [k, k + 1]]
@@ -59,25 +54,26 @@ def compute_te_for_method(data, method_func):
         try:
             bins = method_func(pair_data.flatten())
 
-            te = transfer_entropy(pair_data, bins, LAG, at=(1, 0))
-            nte = normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
-            lognte = logn_normalized_transfer_entropy(pair_data, bins, LAG, at=(1, 0))
-
-            te_vals.append(te)
-            nte_vals.append(nte)
-            lognte_vals.append(lognte)
+            for metric in METRICS:
+                metric_vals[metric].append(
+                    metric.compute(pair_data, bins, LAG, at=(1, 0))
+                )
         except Exception as e:
             print(f"Error with method {method_func.__name__}: {e!s}")
-            te_vals.append(np.nan)
-            nte_vals.append(np.nan)
-            lognte_vals.append(np.nan)
+            for metric in METRICS:
+                metric_vals[metric].append(np.nan)
 
-    return np.array(te_vals), np.array(nte_vals), np.array(lognte_vals)
+    return {metric: np.array(vals) for metric, vals in metric_vals.items()}
 
 
 def analyze_binning_methods(sample_size, n_jobs=-1):
     """Analyze all binning methods for a given sample size."""
-    results_file = DATA_DIR / RESULTS_FILE_PATTERN.format(sample_size)
+    filename = (
+        "_".join(str(m) for m in METRICS)
+        + "_"
+        + RESULTS_FILE_PATTERN.format(sample_size)
+    )
+    results_file = DATA_DIR / filename
 
     # Check if results already exist
     if results_file.exists():
@@ -88,11 +84,9 @@ def analyze_binning_methods(sample_size, n_jobs=-1):
 
     def process_method(method_item):
         method_name, method_func = method_item
-        te_vals, nte_vals, lognte_vals = compute_te_for_method(data, method_func)
+        metric_vals = compute_te_for_method(data, method_func)
         return method_name, {
-            "TE": te_vals[~np.isnan(te_vals)],
-            "NTE": nte_vals[~np.isnan(nte_vals)],
-            "logNTE": lognte_vals[~np.isnan(lognte_vals)],
+            metric: vals[~np.isnan(vals)] for metric, vals in metric_vals.items()
         }
 
     results_list = Parallel(n_jobs=n_jobs)(
@@ -107,7 +101,7 @@ def analyze_binning_methods(sample_size, n_jobs=-1):
     return results
 
 
-def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric="TE"):
+def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric: Metric):
     """Plot methods side by side: statistical vs rule-based."""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
     sizes = list(results_by_size.keys())
@@ -196,7 +190,7 @@ def main():
         print(f"Analyzing sample size: {size}")
         results_by_size[size] = analyze_binning_methods(size)
 
-    for metric in ["TE", "NTE", "logNTE"]:
+    for metric in METRICS:
         plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric)
 
 
