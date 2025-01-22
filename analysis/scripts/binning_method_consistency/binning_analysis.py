@@ -107,12 +107,7 @@ def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric: M
     sizes = list(results_by_size.keys())
 
     rule_methods = ["Doane", "Freedman-Diaconis", "Rice", "Scott", "Sqrt-n", "Sturges"]
-    statistical_methods = [
-        "AIC",
-        "BIC",
-        "Knuth",
-        "Shimazaki",
-    ]
+    statistical_methods = ["AIC", "BIC", "Knuth", "Shimazaki", "Cross-Validation"]
 
     colors1 = plt.cm.tab10(np.linspace(0, 1, len(rule_methods)))
     colors2 = plt.cm.tab10(np.linspace(0, 1, len(statistical_methods)))

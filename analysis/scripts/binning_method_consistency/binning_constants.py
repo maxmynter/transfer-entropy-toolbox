@@ -8,6 +8,7 @@ from metric_enum import Metric
 from te_toolbox.binning import (
     aic_bins,
     bic_bins,
+    cv_bins,
     doanes_bins,
     freedman_diaconis_bins,
     knuth_bins,
@@ -48,6 +49,7 @@ BINNING_METHODS = {
     "Shimazaki": shimazaki_bins,
     "Sqrt-n": sqrt_n_bins,
     "Sturges": sturges_bins,
+    "Cross-Validation": cv_bins,
     **{"Max " + str(metric): metric.maximising_bins for metric in METRICS},
 }
 

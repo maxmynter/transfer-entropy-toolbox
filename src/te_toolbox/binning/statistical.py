@@ -304,3 +304,45 @@ def small_sample_akaike_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.fl
 
     """
     return optimize_bins(data, aicc_cost, minimize=True, method="Small Sample AIC")
+
+
+def cv_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:
+    """
+    Calculate the cross-validation cost function.
+
+    Implementation of cross-validation estimator for histogram.
+    Based on equation: J(h) = 2/(h(n+1)) * sum(p_j^2)/(h(n-1))
+
+    Args:
+    ----
+        hist: Histogram counts
+        bins: Bin edges
+
+    Returns:
+    -------
+        Cost value to be minimized
+
+    """
+    n = np.sum(hist)
+    h = bins[1] - bins[0]
+
+    p = hist / n
+
+    cost = (2 - (n + 1) * sum(p * p)) / (h * (n - 1))
+    return float(cost)
+
+
+def cv_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """
+    Find optimal bins using cross-validation method.
+
+    Args:
+    ----
+        data: Input data array
+
+    Returns:
+    -------
+        Array of optimal bin edges
+
+    """
+    return optimize_bins(data, cv_cost, minimize=True, method="Cross-Validation")
