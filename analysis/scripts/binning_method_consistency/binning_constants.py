@@ -31,11 +31,11 @@ PLOT_DIR.mkdir(exist_ok=True, parents=True)
 SEED = 42
 EPS = 0.5
 N_TRANSIENT = 10**5
-N_MAPS = 25
+N_MAPS = 50
 LAG = 1
 MIN_SAMPLE = 50
 MAX_SAMPLE = 1.5 * 10**4
-N_SAMPLE = 25
+N_SAMPLE = 100
 SAMPLE_SIZES = [int(i) for i in np.geomspace(MIN_SAMPLE, MAX_SAMPLE, N_SAMPLE)]
 
 # Binning Methods

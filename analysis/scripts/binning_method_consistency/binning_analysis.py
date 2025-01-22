@@ -4,7 +4,6 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import seaborn as sns
 from binning_constants import (
     BINNING_METHODS,
@@ -20,8 +19,6 @@ from binning_constants import (
     RESULTS_FILE_PATTERN,
     SAMPLE_SIZES,
     SEED,
-    STD_PLOT_PATTERN,
-    VIOLIN_PLOT_PATTERN,
 )
 from joblib import Parallel, delayed
 
@@ -110,92 +107,70 @@ def analyze_binning_methods(sample_size, n_jobs=-1):
     return results
 
 
-def plot_violin_comparison(results_by_size, metric="TE"):
-    """Create violin plots comparing binning methods."""
-    plt.figure(figsize=PLOT_STYLES["figure.figsize"])
-
-    # Prepare data for plotting
-    plot_data = []
-    for size, results in results_by_size.items():
-        for method, vals in results.items():
-            method_vals = vals[metric]
-            plot_data.extend([(method, val, size) for val in method_vals])
-
-    df = pd.DataFrame(plot_data, columns=["Method", metric, "Sample Size"])
-
-    # Create violin plot
-    sns.violinplot(data=df, x="Method", y=metric, hue="Sample Size")
-    plt.xticks(rotation=45)
-    plt.title(f"{metric} Distribution by Binning Method")
-    plt.tight_layout()
-
-    # Save plot
-    plot_file = PLOT_DIR / VIOLIN_PLOT_PATTERN.format(metric.lower(), max(SAMPLE_SIZES))
-    plt.savefig(plot_file, dpi=300, bbox_inches="tight")
-    plt.close()
-
-
-def plot_std_comparison(results_by_size, metric="TE"):
-    """Plot standard deviation of TE/NTE values for each method."""
-    plt.figure(figsize=(12, 6))
-
-    for method in BINNING_METHODS:
-        stds = [np.std(results[method][metric]) for results in results_by_size.values()]
-        plt.plot(SAMPLE_SIZES, stds, "o-", label=method)
-
-    plt.xscale("log")
-    plt.xlabel("Sample Size")
-    plt.ylabel(f"Standard Deviation of {metric}")
-    plt.title(f"{metric} Variability by Binning Method")
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-    plt.grid(True)
-    plt.tight_layout()
-
-    # Save plot
-    plot_file = PLOT_DIR / STD_PLOT_PATTERN.format(metric.lower())
-    plt.savefig(plot_file, dpi=300, bbox_inches="tight")
-    plt.close()
-
-
-def plot_criterion_comparison(results_by_size, metric="TE"):
-    """Plot mean values with error bars against sample size for a single metric."""
-    plt.figure(figsize=(12, 6))
-
+def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric="TE"):
+    """Plot methods side by side: statistical vs rule-based."""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
     sizes = list(results_by_size.keys())
-    colors = plt.cm.tab10(
-        np.linspace(0, 1, len(BINNING_METHODS))
-    )  # Color for each method
 
-    for idx, method in enumerate(BINNING_METHODS.keys()):
-        means = []
-        stds = []
+    rule_methods = ["Doane", "Freedman-Diaconis", "Rice", "Scott", "Sqrt-n", "Sturges"]
+    statistical_methods = [
+        "AIC",
+        "BIC",
+        "Knuth",
+        "Shimazaki",
+    ]
+
+    colors1 = plt.cm.tab10(np.linspace(0, 1, len(rule_methods)))
+    colors2 = plt.cm.tab10(np.linspace(0, 1, len(statistical_methods)))
+
+    markers = ["o", "s", "^", "v", "D", "p", "*", "h", "+", "x"]
+
+    # Plot rule-based methods
+    for idx, method in enumerate(rule_methods):
+        means_list = []
+        stds_list = []
         for size in sizes:
             values = results_by_size[size][method][metric]
-            means.append(np.mean(values))
-            stds.append(np.std(values))
+            means_list.append(np.mean(values))
+            stds_list.append(np.std(values))
+        means = np.array(means_list)
+        stds = np.array(stds_list)
 
-        plt.errorbar(
-            sizes,
-            means,
-            yerr=stds,
-            fmt="o-",
-            color=colors[idx],
-            label=method,
-            capsize=5,
-            alpha=0.7,
+        ax1.plot(sizes, means, f"{markers[idx]}-", color=colors1[idx], label=method)
+        ax1.fill_between(
+            sizes, means - stds, means + stds, color=colors1[idx], alpha=0.2
         )
 
-    plt.xscale("log")
-    plt.xticks(sizes, sizes)
+    # Plot statistical methods
+    for idx, method in enumerate(statistical_methods):
+        means_list = []
+        stds_list = []
+        for size in sizes:
+            values = results_by_size[size][method][metric]
+            means_list.append(np.mean(values))
+            stds_list.append(np.std(values))
+        means = np.array(means_list)
+        stds = np.array(stds_list)
 
-    plt.xlabel("Sample Size")
-    plt.ylabel(f"{metric} Value")
-    plt.title(f"{metric} by Sample Size and Method")
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-    plt.grid(True)
+        ax2.plot(sizes, means, f"{markers[idx]}-", color=colors2[idx], label=method)
+        ax2.fill_between(
+            sizes, means - stds, means + stds, color=colors2[idx], alpha=0.2
+        )
+
+    for ax in [ax1, ax2]:
+        ax.set_xscale("log")
+        ax.grid(True, alpha=0.3)
+        ax.set_ylabel(f"{metric} Value")
+        ax.legend(loc="lower right")
+
+    ax2.set_xlabel("Sample Size")
+
+    ax1.set_title("Rule-based Methods")
+    ax2.set_title("Statistical Methods")
+
+    plt.suptitle(f"{metric} by Sample Size and Method Type")
     plt.tight_layout()
 
-    # Save plot
     plot_file = PLOT_DIR / CRITERION_BINS_PATTERN.format(metric.lower())
     plt.savefig(plot_file, dpi=300, bbox_inches="tight")
     plt.close()
@@ -209,9 +184,7 @@ def main():
         results_by_size[size] = analyze_binning_methods(size)
 
     for metric in ["TE", "NTE", "logNTE"]:
-        # plot_violin_comparison(results_by_size, metric)
-        # plot_std_comparison(results_by_size, metric)
-        plot_criterion_comparison(results_by_size, metric)
+        plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric)
 
 
 if __name__ == "__main__":
