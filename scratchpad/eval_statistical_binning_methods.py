@@ -12,7 +12,7 @@ from te_toolbox.binning.statistical import (
 )
 
 
-def plot_cost_functions(data: np.ndarray, min_bins: int = 3):
+def plot_cost_functions(data: np.ndarray, min_edges: int = 3):
     """Plot cost function values against number of bins for different criteria."""
     max_bins = len(data)
 
@@ -25,7 +25,7 @@ def plot_cost_functions(data: np.ndarray, min_bins: int = 3):
         "AICc": (aicc_cost, True),
     }
 
-    n_bins_range = range(min_bins, max_bins)
+    n_bins_range = range(min_edges, max_bins)
 
     for name, (cost_func, minimize) in cost_functions.items():
         plt.figure(figsize=(15, 10))
@@ -64,7 +64,7 @@ def main():
     n_samples = 1000
     data = np.random.normal(0, 1, n_samples)
 
-    plot_cost_functions(data, min_bins=3)
+    plot_cost_functions(data, min_edges=3)
 
 
 if __name__ == "__main__":
