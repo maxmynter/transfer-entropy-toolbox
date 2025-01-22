@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import numpy as np
+from max_entropy_bins import max_logntent_bins, max_ntent_bins, max_tent_bins
 
 from te_toolbox.binning import (
     aic_bins,
@@ -50,6 +51,9 @@ BINNING_METHODS = {
     "Shimazaki": shimazaki_bins,
     "Sqrt-n": sqrt_n_bins,
     "Sturges": sturges_bins,
+    "Max TE": max_tent_bins,
+    "Max NTE": max_ntent_bins,
+    "Max logNTE": max_logntent_bins,
 }
 
 # Map Configuration

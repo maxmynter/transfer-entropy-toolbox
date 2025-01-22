@@ -157,6 +157,19 @@ def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric="T
             sizes, means - stds, means + stds, color=colors2[idx], alpha=0.2
         )
 
+    max_ent_label = f"Max {metric}"
+    ax2.errorbar(
+        sizes,
+        [np.mean(results_by_size[size][max_ent_label][metric]) for size in sizes],
+        yerr=[np.std(results_by_size[size][max_ent_label][metric]) for size in sizes],
+        fmt="o-",
+        color="red",
+        label=max_ent_label,
+        capsize=5,
+        linewidth=2,
+        alpha=0.8,
+        markersize=8,
+    )
     for ax in [ax1, ax2]:
         ax.set_xscale("log")
         ax.grid(True, alpha=0.3)
