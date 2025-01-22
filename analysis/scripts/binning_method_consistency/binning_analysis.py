@@ -23,6 +23,7 @@ from binning_constants import (
     STD_PLOT_PATTERN,
     VIOLIN_PLOT_PATTERN,
 )
+from joblib import Parallel, delayed
 
 from te_toolbox.entropies import (
     logn_normalized_transfer_entropy,
@@ -88,16 +89,21 @@ def analyze_binning_methods(sample_size, n_jobs=-1):
 
     data = generate_cml_data(sample_size)
 
-    results = {}
-    for method_name, method_func in BINNING_METHODS.items():
+    def process_method(method_item):
+        method_name, method_func = method_item
         te_vals, nte_vals, lognte_vals = compute_te_for_method(data, method_func)
-        results[method_name] = {
+        return method_name, {
             "TE": te_vals[~np.isnan(te_vals)],
             "NTE": nte_vals[~np.isnan(nte_vals)],
             "logNTE": lognte_vals[~np.isnan(lognte_vals)],
         }
 
-    # Save results
+    results_list = Parallel(n_jobs=n_jobs)(
+        delayed(process_method)(item) for item in BINNING_METHODS.items()
+    )
+
+    results = dict(results_list)
+
     with open(results_file, "wb") as f:
         pickle.dump(results, f)
 
