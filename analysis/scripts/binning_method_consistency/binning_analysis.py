@@ -178,7 +178,7 @@ def plot_criterion_comparison_shaded_subplots_by_type(results_by_size, metric: M
     plt.suptitle(f"{metric} by Sample Size and Method Type")
     plt.tight_layout()
 
-    plot_file = PLOT_DIR / CRITERION_BINS_PATTERN.format(metric.lower())
+    plot_file = PLOT_DIR / CRITERION_BINS_PATTERN.format(str(metric))
     plt.savefig(plot_file, dpi=300, bbox_inches="tight")
     plt.close()
 
