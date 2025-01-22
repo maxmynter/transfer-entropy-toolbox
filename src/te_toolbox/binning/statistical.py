@@ -10,57 +10,104 @@ import numpy.typing as npt
 logger = logging.getLogger(__name__)
 
 
-def optimize_bins(
+def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and internal function
     data: npt.NDArray[np.float64],
     cost_function: Callable[[npt.NDArray[np.float64], npt.NDArray[np.float64]], float],
     minimize: bool = True,
-    patience: int = 10,
+    window_size: int = 20,
+    trend_patience: int = 10,
+    stationary_threshold: float = 1e-4,
+    method: str = "unknown",
 ) -> npt.NDArray[np.float64]:
     """
     Find optimal binning by scanning until cost function stops improving.
 
-    Uses early stopping with patience to avoid unnecessary computation.
+    Stop early when the criterion gets worse or becomes stationary.
+
+    This function optimizes the number of bins by evaluating a cost function.
+    It uses a moving average approach to detect when the cost function either:
+    1. Becomes stationary (changes less than stationary_threshold)
+    2. Shows a consistent worsening trend
+
+    The optimization stops early if either condition persists for trend_patience
+    consecutive windows. The counters reset whenever a new optimum is found.
 
     Args:
     ----
-        data: Input array
+        data: Input array to be binned
         cost_function: Function that computes cost for given histogram and bins
         minimize: If True, look for minimum. If False, look for maximum
-        patience: Number of consecutive worse results before stopping
+        window_size: Size of window for moving average calculation
+        trend_patience: Number of consecutive worse/stationary windows before stopping
+        stationary_threshold: Maximum relative change threshold to detect stationarity
+        method: Name of binning method being used (for logging)
 
     Returns:
     -------
-        Optimal bin edges
+        npt.NDArray[np.float64]: Optimal bin edges for the input data
 
     """
     n = len(data)
-    n_min = max(2, int(np.sqrt(n) * 0.1))  # Start with a reasonable minimum
-    n_max = min(n, int(np.sqrt(n) * 10))  # Upper limit as safety
+    n_min = max(2, int(np.sqrt(n) * 0.1)) + 1  # Convert bins to edges
+    n_max = min(n, int(np.sqrt(n) * 10)) + 1
 
+    costs = []
     best_cost = float("inf") if minimize else float("-inf")
-    last_cost = best_cost
     best_n = n_min
-    worse_count = 0
 
-    for n_bins in range(n_min, n_max):
+    # Walk initial window size for moving average calculation
+    for n_bins in range(n_min, n_min + window_size):
         bins = np.linspace(np.min(data), np.max(data), n_bins)
         hist, _ = np.histogram(data, bins)
         cost = cost_function(hist, bins)
+        costs.append(cost)
 
-        # Check if we found a better solution
         if (minimize and cost < best_cost) or (not minimize and cost > best_cost):
             best_cost = cost
             best_n = n_bins
-            worse_count = 0
-        elif (minimize and cost < last_cost) or (not minimize and cost > last_cost):
-            worse_count = 0
-        else:
-            worse_count += 1
-            if worse_count >= patience:
+
+    worse_trend_count = 0
+    stationary_count = 0
+    last_avg = np.mean(costs[-window_size:])
+
+    for n_bins in range(n_min + window_size, n_max):
+        bins = np.linspace(np.min(data), np.max(data), n_bins)
+        hist, _ = np.histogram(data, bins)
+        cost = cost_function(hist, bins)
+        costs.append(cost)
+
+        if (minimize and cost < best_cost) or (not minimize and cost > best_cost):
+            best_cost = cost
+            best_n = n_bins
+            # Reset counters
+            worse_trend_count = 0
+            stationary_count = 0
+
+        if len(costs) >= window_size:
+            current_avg = np.mean(costs[-window_size:])
+            rel_change = (
+                abs((current_avg - last_avg) / abs(last_avg))
+                if last_avg != 0
+                else last_avg
+            )
+
+            stationary_count = (
+                stationary_count + 1 if rel_change < stationary_threshold else 0
+            )
+            trend_is_worse = (minimize and current_avg > last_avg) or (
+                not minimize and current_avg < last_avg
+            )
+
+            worse_trend_count = worse_trend_count + 1 if trend_is_worse else 0
+
+            if worse_trend_count >= trend_patience or stationary_count > trend_patience:
                 break
+
+            last_avg = current_avg
     else:
         logger.warning(
-            f"Warning: reached maximum_bins ({n_max}) without identifying optimum."
+            f"Warning: reached maximum_bins ({n_max}) without identifying optimum "
+            f"using method: {method}."
         )
 
     return np.linspace(np.min(data), np.max(data), best_n)
@@ -143,7 +190,9 @@ def aicc_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> flo
     aic = aic_cost(hist, bins)
     if n > m + 1:
         correction = 2 * m * (m + 1) / (n - m - 1)
-        return float(aic + correction)
+        return float(
+            aic + correction - 2 * m
+        )  # Subtract unscaled model dimension term and add corrected.
     return float("inf")
 
 
@@ -186,7 +235,7 @@ def knuth_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         Array of optimal bin edges
 
     """
-    return optimize_bins(data, knuth_cost, minimize=False)
+    return optimize_bins(data, knuth_cost, minimize=False, method="Knuth")
 
 
 def shimazaki_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -202,7 +251,7 @@ def shimazaki_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         Array of optimal bin edges
 
     """
-    return optimize_bins(data, shimazaki_cost, minimize=True)
+    return optimize_bins(data, shimazaki_cost, minimize=True, method="Shimazaki")
 
 
 def aic_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -218,7 +267,7 @@ def aic_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         Array of optimal bin edges
 
     """
-    return optimize_bins(data, aic_cost, minimize=True)
+    return optimize_bins(data, aic_cost, minimize=True, method="AIC")
 
 
 def bic_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -234,7 +283,7 @@ def bic_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         Array of optimal bin edges
 
     """
-    return optimize_bins(data, bic_cost, minimize=True)
+    return optimize_bins(data, bic_cost, minimize=True, method="BIC")
 
 
 def small_sample_akaike_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -253,4 +302,4 @@ def small_sample_akaike_bins(data: npt.NDArray[np.float64]) -> npt.NDArray[np.fl
         Array of optimal bin edges
 
     """
-    return optimize_bins(data, aicc_cost, minimize=True)
+    return optimize_bins(data, aicc_cost, minimize=True, method="Small Sample AIC")
