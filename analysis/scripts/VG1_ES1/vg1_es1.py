@@ -24,6 +24,8 @@ def read_data():
 
 def plot_histogram(df, plot_name="histograms"):
     """Plot histograms of df."""
+    savepath = PLOT_PATH / f"{plot_name}.png"
+
     plt.figure(figsize=(12, 4))
     plt.subplot(121)
     plt.hist(df["VG1"], bins=50, alpha=0.7)
@@ -32,13 +34,16 @@ def plot_histogram(df, plot_name="histograms"):
     plt.hist(df["ES1"], bins=50, alpha=0.7)
     plt.title("ES1 Distribution")
     plt.tight_layout()
-    plt.savefig(PLOT_PATH / f"{plot_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(savepath, dpi=300, bbox_inches="tight")
     plt.close()
+    print(f"Saved: {savepath}")
 
 
 def plot_time_series(df, plot_name="timeseries"):
     """Plot the full timeseries in df."""
     datetime_col = df.columns[0]
+
+    savepath = PLOT_PATH / f"{plot_name}.png"
     plt.figure(figsize=(12, 6))
     plt.plot(df[datetime_col], df["VG1"], label="VG1")
     plt.plot(df[datetime_col], df["ES1"], label="ES1")
@@ -46,8 +51,9 @@ def plot_time_series(df, plot_name="timeseries"):
     plt.legend()
     plt.title("Time Series Evolution")
     plt.tight_layout()
-    plt.savefig(PLOT_PATH / f"{plot_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(savepath, dpi=300, bbox_inches="tight")
     plt.close()
+    print(f"Saved: {savepath}")
 
 
 def split_on_date(
