@@ -1,5 +1,7 @@
 """Analyse the VG1 ES1 Futures data in terms of Transfer Entropy."""
 
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import polars as pl
 from constants_vg1_es1 import DATA_PATH, PLOT_PATH
@@ -48,13 +50,34 @@ def plot_time_series(df, plot_name="timeseries"):
     plt.close()
 
 
+def split_on_date(
+    df: pl.DataFrame, cutoff: datetime
+) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Split a df on a datetime in a before and after datetime."""
+    datetime_col = df.columns[0]
+
+    before = df.filter(pl.col(datetime_col) < cutoff)
+    after = df.filter(pl.col(datetime_col) >= cutoff)
+
+    return before, after
+
+
 def main():
     """Run VG1 ES1 analysis."""
     df = read_data()
     print(df.describe())
     plot_histogram(df, "VG1_ES1_unprocessed_hist")
     plot_time_series(df, "VG1_ES1_unprocessed_time_evolution")
+
+    print("\n ===Full Head===")
     print(df.head())
+
+    bdf, adf = split_on_date(df, datetime(2020, 5, 1))
+    print("\n ===BEFORE CUTOFF===")
+    print(bdf.describe())
+
+    print("\n ===AFTER CUTOFF===")
+    print(adf.describe())
 
 
 if __name__ == "__main__":
