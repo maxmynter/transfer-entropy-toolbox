@@ -7,11 +7,13 @@ import numpy as np
 from te_toolbox.entropies.bivariate import conditional_entropy as ce
 from te_toolbox.entropies.bivariate import discrete_joint_entropy as dje
 from te_toolbox.entropies.multivariates import discrete_multivar_joint_entropy as dmje
+from te_toolbox.entropies.transfer.base import discrete_transfer_entropy as dte
 from te_toolbox.entropies.univariate import discrete_entropy as de
 from te_toolbox.fast_entropy import discrete_conditional_entropy as fdce
 from te_toolbox.fast_entropy import discrete_entropy as fde
 from te_toolbox.fast_entropy import discrete_joint_entropy as fdje
 from te_toolbox.fast_entropy import discrete_multivar_joint_entropy as fdmje
+from te_toolbox.fast_entropy import discrete_transfer_entropy as fdte
 
 n_samples = 10**5
 n_vars1 = 3
@@ -63,4 +65,11 @@ if __name__ == "__main__":
         "Conditional Entropy",
         lambda: ce(data2d, [BINS_X, BINS_Y], at=(0, 1)),  # H(Y|X)
         lambda: fdce(data2d, [UNIQUE_X, UNIQUE_Y]),  # H(Y|X)
+    )
+    benchmark(
+        "Transfer Entropy",
+        lambda: dte(
+            data2d, n_classes=[UNIQUE_X, UNIQUE_Y], lag=1, at=(0, 1)
+        ),  # TE Y->X
+        lambda: fdte(data2d, n_classes=[UNIQUE_X, UNIQUE_Y], lag=1),  # TE Y->X
     )

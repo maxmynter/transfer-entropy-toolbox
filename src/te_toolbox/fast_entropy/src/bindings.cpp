@@ -2,12 +2,13 @@
 #include "discrete_entropy.h"
 #include "discrete_joint_entropy.h"
 #include "discrete_multivar_entropy.h"
+#include "discrete_transfer_entropy.h"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(_fast_entropy, m) { // Make sure this matches your Python import
+PYBIND11_MODULE(_fast_entropy, m) {
   m.doc() = "Fast entropy calculations using C++";
 
   m.def("discrete_entropy", &fast_entropy::discrete_entropy,
@@ -28,4 +29,8 @@ PYBIND11_MODULE(_fast_entropy, m) { // Make sure this matches your Python import
         "Calculate conditional entropy H(Y|X) between the two column variables "
         "[X,Y]",
         py::arg("data").noconvert(), py::arg("n_classes"));
+
+  m.def("discrete_transfer_entropy", &fast_entropy::discrete_transfer_entropy,
+        "Calculate transfer entropy from X to Y given time series [Y,X]",
+        py::arg("data").noconvert(), py::arg("n_classes"), py::arg("lag"));
 }

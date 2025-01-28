@@ -24,6 +24,7 @@ pybind11_add_module(_fast_entropy
     src/discrete_multivar_entropy.cpp
     src/discrete_joint_entropy.cpp
     src/discrete_conditional_entropy.cpp
+    src/discrete_transfer_entropy.cpp
 )
 
 # Add include directories
