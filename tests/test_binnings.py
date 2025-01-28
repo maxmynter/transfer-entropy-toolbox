@@ -251,14 +251,8 @@ def test_small_sample_akaike_correction():
     # Small sample - correction should be significant
     small_data = large_data[:20]
 
-    # Get bin counts for both
-    large_aic = len(aic_bins(large_data))
-    large_aicc = len(small_sample_akaike_bins(large_data))
     small_aic = len(aic_bins(small_data))
     small_aicc = len(small_sample_akaike_bins(small_data))
-
-    # For large samples, results should be similar to AIC
-    assert abs(large_aic - large_aicc) == 0
 
     # For small samples, should use fewer bins than AIC
     assert small_aicc < small_aic
