@@ -79,4 +79,17 @@ double discrete_transfer_entropy(const py::array_t<int64_t> &data,
   return h_y_ylag + h_xy_lag - h_y_ylag_xlag - h_y_lag;
 }
 
+double
+discrete_log_normalized_transfer_entropy(const py::array_t<int64_t> &data,
+                                         const std::vector<int> &n_classes,
+                                         int lag) {
+
+  // Calculate raw transfer entropy
+  double te = discrete_transfer_entropy(data, n_classes, lag);
+
+  // Normalize by log of number of classes
+  // Use the source variable's n_classes (index 1 since it's [Y,X])
+  return te / std::log(static_cast<double>(n_classes[1]));
+}
+
 } // namespace fast_entropy

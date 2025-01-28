@@ -33,4 +33,10 @@ PYBIND11_MODULE(_fast_entropy, m) {
   m.def("discrete_transfer_entropy", &fast_entropy::discrete_transfer_entropy,
         "Calculate transfer entropy from X to Y given time series [Y,X]",
         py::arg("data").noconvert(), py::arg("n_classes"), py::arg("lag"));
+
+  m.def("discrete_log_normalized_transfer_entropy",
+        &fast_entropy::discrete_log_normalized_transfer_entropy,
+        "Calculate normalized transfer entropy from X to Y given time series "
+        "[Y,X]",
+        py::arg("data").noconvert(), py::arg("n_classes"), py::arg("lag"));
 }
