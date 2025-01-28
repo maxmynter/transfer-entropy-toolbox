@@ -1,3 +1,4 @@
+#include "discrete_conditional_entropy.h"
 #include "discrete_entropy.h"
 #include "discrete_joint_entropy.h"
 #include "discrete_multivar_entropy.h"
@@ -20,5 +21,11 @@ PYBIND11_MODULE(_fast_entropy, m) { // Make sure this matches your Python import
   m.def("discrete_multivar_joint_entropy",
         &fast_entropy::discrete_multivar_joint_entropy,
         "Calculate discrete multivariate joint entropy",
+        py::arg("data").noconvert(), py::arg("n_classes"));
+
+  m.def("discrete_conditional_entropy",
+        &fast_entropy::discrete_conditional_entropy,
+        "Calculate conditional entropy H(Y|X) between the two column variables "
+        "[X,Y]",
         py::arg("data").noconvert(), py::arg("n_classes"));
 }
