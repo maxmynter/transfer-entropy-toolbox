@@ -6,7 +6,16 @@ from hypothesis import given
 from hypothesis import strategies as st
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from te_toolbox.preprocessing import noisify, remap_to
+from te_toolbox.preprocessing import ft_surrogatization, noisify, remap_to
+
+
+@pytest.fixture
+def sample_sine_data():
+    """Generate sample sinusoidal data for testing."""
+    t = np.linspace(0, 10, 1000)
+    x1 = np.sin(2 * np.pi * 0.5 * t)
+    x2 = np.cos(2 * np.pi * 0.7 * t)
+    return np.column_stack([x1, x2])
 
 
 def test_noisify_shape_preservation():
@@ -157,3 +166,100 @@ def test_remap_to_distribution_preservation(n_samples, n_vars):
     # For each column, check if the values match exactly with distribution
     for i in range(n_vars):
         assert set(np.round(result[:, i], 10)) == set(np.round(distribution[:, i], 10))
+
+
+def test_ft_surrogatization_basic():
+    """Test basic functionality of ft_surrogatization."""
+    data = np.random.normal(0, 1, (100, 2))
+    surr = ft_surrogatization(data)
+    assert surr.shape == data.shape
+    assert not np.array_equal(surr, data)
+
+
+def test_ft_surrogatization_power_spectrum():
+    """Test if power spectrum is preserved."""
+    data = np.random.normal(0, 1, (100, 2))
+    surr = ft_surrogatization(data)
+
+    for i in range(data.shape[1]):
+        ps_orig = np.abs(np.fft.rfft(data[:, i]))
+        ps_surr = np.abs(np.fft.rfft(surr[:, i]))
+        assert_array_almost_equal(ps_orig, ps_surr)
+
+
+def test_ft_surrogatization_deterministic():
+    """Test reproducibility with same RNG."""
+    data = np.random.normal(0, 1, (100, 2))
+    rng = np.random.default_rng(42)
+
+    surr1 = ft_surrogatization(data, rng=rng)
+    rng = np.random.default_rng(42)  # Reset RNG
+    surr2 = ft_surrogatization(data, rng=rng)
+
+    assert_array_almost_equal(surr1, surr2)
+
+
+def test_ft_surrogatization_different_seeds():
+    """Test that different seeds produce different surrogates."""
+    data = np.random.normal(0, 1, (100, 2))
+    rng1 = np.random.default_rng(42)
+    rng2 = np.random.default_rng(43)
+
+    surr1 = ft_surrogatization(data, rng=rng1)
+    surr2 = ft_surrogatization(data, rng=rng2)
+
+    assert not np.array_equal(surr1, surr2)
+
+
+def test_ft_surrogatization_dc_component():
+    """Test preservation of mean (DC component)."""
+    data = np.random.normal(5, 1, (100, 2))  # Non-zero mean
+    surr = ft_surrogatization(data)
+
+    assert_array_almost_equal(np.mean(data, axis=0), np.mean(surr, axis=0))
+
+
+def test_ft_surrogatization_sine_wave():
+    """Test with simple sine waves to check frequency preservation."""
+    t = np.linspace(0, 10, 1000)
+    data = np.sin(2 * np.pi * 0.5 * t).reshape(-1, 1)
+    surr = ft_surrogatization(data)
+
+    # Check power at main frequency
+    freq_orig = np.abs(np.fft.rfft(data[:, 0]))
+    freq_surr = np.abs(np.fft.rfft(surr[:, 0]))
+
+    # Find peak frequency
+    peak_freq_orig = np.argmax(freq_orig)
+    peak_freq_surr = np.argmax(freq_surr)
+
+    assert peak_freq_orig == peak_freq_surr
+
+
+@given(
+    st.integers(min_value=50, max_value=1000),
+    st.integers(min_value=1, max_value=5),
+)
+def test_ft_surrogatization_properties(n_samples, n_vars):
+    """Test ft_surrogatization with different dimensions."""
+    data = np.random.normal(0, 1, (n_samples, n_vars))
+    surr = ft_surrogatization(data)
+
+    assert surr.shape == (n_samples, n_vars)
+    for i in range(n_vars):
+        ps_orig = np.abs(np.fft.rfft(data[:, i]))
+        ps_surr = np.abs(np.fft.rfft(surr[:, i]))
+        assert_array_almost_equal(ps_orig, ps_surr)
+
+
+def test_ft_surrogatization_even_odd_samples():
+    """Test behavior with even and odd number of samples."""
+    # Even number of samples
+    data_even = np.random.normal(0, 1, (100, 1))
+    surr_even = ft_surrogatization(data_even)
+    assert surr_even.shape == data_even.shape
+
+    # Odd number of samples
+    data_odd = np.random.normal(0, 1, (101, 1))
+    surr_odd = ft_surrogatization(data_odd)
+    assert surr_odd.shape == data_odd.shape

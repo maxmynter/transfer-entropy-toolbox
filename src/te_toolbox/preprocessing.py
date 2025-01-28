@@ -6,6 +6,45 @@ import numpy as np
 import numpy.typing as npt
 
 
+def ft_surrogatization(
+    data: npt.NDArray, rng: np.random.Generator | None = None
+) -> npt.NDArray[np.float64]:
+    """Generate Fourier transform surrogates of time series data.
+
+    Creates phase-randomized surrogates that preserve the power spectrum
+    (linear correlations) of the original data.
+
+    Args:
+        data: Input array of shape (n_samples, n_variables)
+        rng: Random number generator instance
+
+    Returns:
+        Surrogate data array of same shape as input
+
+    """
+    if rng is None:
+        rng = np.random.default_rng()
+
+    n_samples, n_vars = data.shape
+    surrogates = np.empty_like(data)
+
+    for i in range(n_vars):
+        fft = np.fft.rfft(data[:, i])
+        phases = 2 * np.pi * rng.random(len(fft))
+
+        # Keep DC (0 freq) and Nyquist frequency phases unchanged
+        phases[0] = 0.0
+        if n_samples % 2 == 0:
+            phases[-1] = 0.0
+
+        fft_surr = fft * np.exp(1j * phases)
+        surr = np.real(np.fft.irfft(fft_surr, n=n_samples))
+
+        surrogates[:, i] = surr.ravel()
+
+    return surrogates
+
+
 def noisify(
     data: npt.NDArray[np.float64],
     noise_distribution: str | Callable,
