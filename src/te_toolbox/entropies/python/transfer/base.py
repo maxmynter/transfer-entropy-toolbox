@@ -3,8 +3,8 @@
 import numpy as np
 
 from ..bivariate import discrete_joint_entropy
-from ..core.discretization import _discretize_nd_data
-from ..core.types import BinType, FloatArray, IntArray
+from ...core.discretization import _discretize_nd_data
+from ...core.types import BinType, FloatArray, IntArray
 from ..multivariates import discrete_multivar_joint_entropy
 from ..univariate import discrete_entropy
 

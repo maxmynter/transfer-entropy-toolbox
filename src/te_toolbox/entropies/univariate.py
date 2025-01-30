@@ -1,38 +1,34 @@
 """Univariate Entropy"""
 
 from typing import overload
+
 import numpy as np
 
-from .python import univariate as python_univariate
 from . import cpp
-from .core import get_backend, Backend
-from .core import MATRIX_DIMS, VECTOR_DIMS
+from .core import MATRIX_DIMS, VECTOR_DIMS, Backend, get_backend
 from .core.discretization import _discretize_nd_data
 from .core.types import BinType, FloatArray, IntArray
+from .python import univariate as python_univariate
 
 
 @overload
 def _cpp_discrete_entropy(
-    data: IntArray,
-    n_classes: int | list[int],
-    at: int
+    data: IntArray, n_classes: int | list[int], at: int
 ) -> np.float64: ...
 
-@overload
-def _cpp_discrete_entropy(
-    data: IntArray,
-    n_classes: int | list[int],
-    at: None) -> FloatArray: ...
 
 @overload
 def _cpp_discrete_entropy(
-    data: IntArray,
-    n_classes: int | list[int]) -> FloatArray: ...
+    data: IntArray, n_classes: int | list[int], at: None
+) -> FloatArray: ...
+
+
+@overload
+def _cpp_discrete_entropy(data: IntArray, n_classes: int | list[int]) -> FloatArray: ...
+
 
 def _cpp_discrete_entropy(
-    data: IntArray,
-    n_classes: int | list[int],
-    at: int | None = None
+    data: IntArray, n_classes: int | list[int], at: int | None = None
 ) -> FloatArray | np.float64:
     if data.ndim == 1:
         return np.float64(cpp.discrete_entropy(data, n_classes))
@@ -40,10 +36,12 @@ def _cpp_discrete_entropy(
     _, n_vars = data.shape
 
     if isinstance(n_classes, int):
-            n_classes = [n_classes] * n_vars
+        n_classes = [n_classes] * n_vars
 
     if at is not None:
-        return np.float64(cpp.discrete_entropy(np.ravel(data[:, at]), int(n_classes[at])))
+        return np.float64(
+            cpp.discrete_entropy(np.ravel(data[:, at]), int(n_classes[at]))
+        )
     else:
         probs = np.empty(n_vars, dtype=np.float64)
         for i in range(n_vars):
@@ -101,4 +99,4 @@ def entropy(
         case Backend.CPP:
             return _cpp_discrete_entropy(indices, n_classes, at)
         case _:
-            raise ValueError(f"Unkown Backend")
+            raise ValueError("Unkown Backend")

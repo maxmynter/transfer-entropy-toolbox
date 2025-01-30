@@ -26,7 +26,7 @@ def _discretize_1d_data(
         edges = bins
 
     # Subtract 1 as digitize is 1 indexed
-    indices = np.digitize(data_array, edges, right=False) - 1
+    indices = (np.digitize(data_array, edges, right=False) - 1).astype(np.int64)
 
     n_bins = len(edges) - 1
 

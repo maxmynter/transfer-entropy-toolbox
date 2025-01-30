@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from ..core.discretization import _discretize_nd_data
-from ..core.types import BinType, FloatArray, IntArray
+from ...core.discretization import _discretize_nd_data
+from ...core.types import BinType, FloatArray, IntArray
 
 
 def discrete_multivar_joint_entropy(
