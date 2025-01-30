@@ -33,13 +33,6 @@ PROB_RTOL = 1e-4  # Relative tolerance for probabilistic tests
 PROB_ATOL = 1e-4  # Absolute tolerance for probabilistic tests
 
 
-@pytest.fixture(autouse=True)
-def cleanup_backend():
-    """Set Backend to CPP backend after each test."""
-    yield
-    set_backend(Backend.CPP.value)
-
-
 @pytest.fixture
 def sample_data():
     """Generate sample data for testing."""
@@ -62,10 +55,8 @@ def test_discrete_entropy(sample_data):
     X, _, _ = sample_data  # noqa: N806 # X for a dataset
     unique_x = len(np.unique(X))
 
-    set_backend(Backend.PY.value)
     legacy_result = de(X, unique_x)
 
-    set_backend(Backend.CPP.value)
     fast_result = fde(X, unique_x)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -77,10 +68,8 @@ def test_discrete_entropy_hypothesis(n_samples):
     X = np.random.randint(0, N_VARS, size=n_samples)  # noqa: N806 # X for a dataset
     unique_x = len(np.unique(X))
 
-    set_backend(Backend.PY.value)
     legacy_result = de(X, unique_x)
 
-    set_backend(Backend.CPP.value)
     fast_result = fde(X, unique_x)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -91,10 +80,8 @@ def test_joint_entropy(sample_data):
     _, _, data2d = sample_data
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
-    set_backend(Backend.PY.value)
     legacy_result = dje(data2d, unique_vals, at=(0, 1))
 
-    set_backend(Backend.CPP.value)
     fast_result = fdje(data2d, unique_vals)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -105,10 +92,8 @@ def test_multivariate_joint_entropy(sample_data):
     X, Y, _ = sample_data  # noqa: N806 # X, Y for a dataset
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
-    set_backend(Backend.PY.value)
     legacy_result = dmje([X, Y], unique_vals)
 
-    set_backend(Backend.CPP.value)
     fast_result = fdmje([X, Y], unique_vals)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -120,10 +105,8 @@ def test_transfer_entropy(sample_data, lag):
     _, _, data2d = sample_data
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
-    set_backend(Backend.PY.value)
     legacy_result = dte(data2d, n_classes=unique_vals, lag=lag, at=(0, 1))
 
-    set_backend(Backend.CPP.value)
     fast_result = fdte(data2d, n_classes=unique_vals, lag=lag)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
