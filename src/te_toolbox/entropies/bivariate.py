@@ -1,52 +1,57 @@
 """Bivariate Entropies."""
 
 from typing import overload
-from . import cpp
+
 import numpy as np
 
-from .core import MATRIX_DIMS
-from .core.types import BinType, FloatArray, IntArray
-from .univariate import entropy
-from .core import get_backend, Backend
-from .python.bivariate import discrete_joint_entropy as python_discrete_joint_entropy
+from . import cpp
+from .core import MATRIX_DIMS, Backend, get_backend
 from .core.discretization import _discretize_nd_data
+from .core.types import BinType, FloatArray, IntArray
+from .python.bivariate.joint_entropy import (
+    discrete_joint_entropy as python_discrete_joint_entropy,
+)
+from .univariate import entropy
+
+
+@overload
+def _cpp_discrete_joint_entropy(
+    data: IntArray, n_classes: list | list[int], at: tuple[int, int]
+) -> np.float64: ...
+
 
 @overload
 def _cpp_discrete_joint_entropy(
     data: IntArray,
     n_classes: list | list[int],
-    at: tuple[int, int]
-) -> np.float64:...
+) -> FloatArray: ...
+
 
 @overload
 def _cpp_discrete_joint_entropy(
-    data: IntArray,
-    n_classes: list | list[int],
-) -> FloatArray:...
+    data: IntArray, n_classes: list | list[int], at: None
+) -> np.float64: ...
 
-@overload
-def _cpp_discrete_joint_entropy(
-    data: IntArray,
-    n_classes: list | list[int],
-    at: None
-) -> np.float64:...
 
 def _cpp_discrete_joint_entropy(
-    data: IntArray,
-    n_classes: list | list[int],
-    at: tuple[int, int] | None = None
+    data: IntArray, n_classes: list | list[int], at: tuple[int, int] | None = None
 ) -> np.float64 | FloatArray:
     _, n_vars = data.shape
     if isinstance(n_classes, int):
-        n_classes= [n_classes] * n_vars
+        n_classes = [n_classes] * n_vars
     if at is not None:
-        return cpp.discrete_joint_entropy(data[:,at], [n_classes[at[0]], n_classes[at[1]]] )
+        return cpp.discrete_joint_entropy(
+            data[:, at], [n_classes[at[0]], n_classes[at[1]]]
+        )
     jent = np.zeros((n_vars, n_vars))
     for i in range(n_vars):
         for j in range(i, n_vars):
             columns = np.column_stack([data[:, i], data[:, j]])
-            jent[i, j] = jent[j, i] = cpp.discrete_joint_entropy(columns, [n_classes[i], n_classes[j]])
+            jent[i, j] = jent[j, i] = cpp.discrete_joint_entropy(
+                columns, [n_classes[i], n_classes[j]]
+            )
     return jent
+
 
 @overload
 def joint_entropy(

@@ -1,4 +1,4 @@
-"""Testing the consistency between numpy and CPP implementations of entropies."""
+"""Testing the consistency between numpy and CPP.value implementations of entropies."""
 
 import numpy as np
 import pytest
@@ -7,15 +7,20 @@ from hypothesis import strategies as st
 from numpy.testing import assert_allclose
 
 from te_toolbox.entropies.bivariate import conditional_entropy as ce
-from te_toolbox.entropies.bivariate import discrete_joint_entropy as dje
-from te_toolbox.entropies.multivariates import discrete_multivar_joint_entropy as dmje
-from te_toolbox.entropies.transfer.base import discrete_transfer_entropy as dte
-from te_toolbox.entropies.univariate import discrete_entropy as de
-from te_toolbox.fast_entropy import discrete_conditional_entropy as fdce
-from te_toolbox.fast_entropy import discrete_entropy as fde
-from te_toolbox.fast_entropy import discrete_joint_entropy as fdje
-from te_toolbox.fast_entropy import discrete_multivar_joint_entropy as fdmje
-from te_toolbox.fast_entropy import discrete_transfer_entropy as fdte
+from te_toolbox.entropies.core import Backend, set_backend
+from te_toolbox.entropies.cpp import discrete_conditional_entropy as fdce
+from te_toolbox.entropies.cpp import discrete_entropy as fde
+from te_toolbox.entropies.cpp import discrete_joint_entropy as fdje
+from te_toolbox.entropies.cpp import discrete_multivar_joint_entropy as fdmje
+from te_toolbox.entropies.cpp import discrete_transfer_entropy as fdte
+from te_toolbox.entropies.python.bivariate.joint_entropy import (
+    discrete_joint_entropy as dje,
+)
+from te_toolbox.entropies.python.multivariates.multivariate_joint_entropy import (
+    discrete_multivar_joint_entropy as dmje,
+)
+from te_toolbox.entropies.python.transfer.base import discrete_transfer_entropy as dte
+from te_toolbox.entropies.python.univariate.entropy import discrete_entropy as de
 
 # Constants for fixed test cases
 N_SAMPLES = 1000
@@ -26,6 +31,13 @@ ATOL = 1e-5  # Increased tolerance for float comparisons
 # Additional tolerances for probabilistic tests
 PROB_RTOL = 1e-4  # Relative tolerance for probabilistic tests
 PROB_ATOL = 1e-4  # Absolute tolerance for probabilistic tests
+
+
+@pytest.fixture(autouse=True)
+def cleanup_backend():
+    """Set Backend to CPP backend after each test."""
+    yield
+    set_backend(Backend.CPP.value)
 
 
 @pytest.fixture
@@ -50,7 +62,10 @@ def test_discrete_entropy(sample_data):
     X, _, _ = sample_data  # noqa: N806 # X for a dataset
     unique_x = len(np.unique(X))
 
+    set_backend(Backend.PY.value)
     legacy_result = de(X, unique_x)
+
+    set_backend(Backend.CPP.value)
     fast_result = fde(X, unique_x)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -62,7 +77,10 @@ def test_discrete_entropy_hypothesis(n_samples):
     X = np.random.randint(0, N_VARS, size=n_samples)  # noqa: N806 # X for a dataset
     unique_x = len(np.unique(X))
 
+    set_backend(Backend.PY.value)
     legacy_result = de(X, unique_x)
+
+    set_backend(Backend.CPP.value)
     fast_result = fde(X, unique_x)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -73,7 +91,10 @@ def test_joint_entropy(sample_data):
     _, _, data2d = sample_data
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
+    set_backend(Backend.PY.value)
     legacy_result = dje(data2d, unique_vals, at=(0, 1))
+
+    set_backend(Backend.CPP.value)
     fast_result = fdje(data2d, unique_vals)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -84,7 +105,10 @@ def test_multivariate_joint_entropy(sample_data):
     X, Y, _ = sample_data  # noqa: N806 # X, Y for a dataset
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
+    set_backend(Backend.PY.value)
     legacy_result = dmje([X, Y], unique_vals)
+
+    set_backend(Backend.CPP.value)
     fast_result = fdmje([X, Y], unique_vals)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
@@ -96,25 +120,27 @@ def test_transfer_entropy(sample_data, lag):
     _, _, data2d = sample_data
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
+    set_backend(Backend.PY.value)
     legacy_result = dte(data2d, n_classes=unique_vals, lag=lag, at=(0, 1))
+
+    set_backend(Backend.CPP.value)
     fast_result = fdte(data2d, n_classes=unique_vals, lag=lag)
 
     assert_allclose(legacy_result, fast_result, rtol=RTOL, atol=ATOL)
 
 
 def test_conditional_entropy_with_discretization(sample_data, bins):
-    """Test consistency between numpy and CPP implementation."""
+    """Test consistency between numpy and CPP.value implementation."""
     _, _, data2d = sample_data
     bins_x, bins_y = bins
     unique_vals = [N_VARS, N_VARS * 2 - 1]
 
-    # Legacy implementation requires discretized data
+    set_backend(Backend.PY.value)
     legacy_result = ce(data2d, [bins_x, bins_y], at=(0, 1))
 
-    # Fast implementation works with original data
+    set_backend(Backend.CPP.value)
     fast_result = fdce(data2d, unique_vals)
 
-    # Note: Results might differ slightly due to discretization
     assert_allclose(legacy_result, fast_result, rtol=1e-2, atol=1e-2)
 
 

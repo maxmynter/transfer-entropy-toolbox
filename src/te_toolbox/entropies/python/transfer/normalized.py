@@ -4,9 +4,9 @@ from typing import overload
 
 import numpy as np
 
-from ..bivariate import discrete_joint_entropy
 from ...core.discretization import _discretize_nd_data
 from ...core.types import BinType, FloatArray, IntArray, NClasses
+from ..bivariate import discrete_joint_entropy
 from ..multivariates import discrete_multivar_joint_entropy
 from ..univariate import discrete_entropy
 from .base import discrete_transfer_entropy
