@@ -6,8 +6,7 @@ import numpy as np
 from numba import jit
 
 from ...core import MATRIX_DIMS
-from ...core.discretization import _discretize_nd_data
-from ...core.types import BinType, FloatArray, IntArray, NClasses
+from ...core.types import FloatArray, IntArray, NClasses
 
 
 @jit(nopython=True, fastmath=True)

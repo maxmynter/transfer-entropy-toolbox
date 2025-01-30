@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from ...core.types import BinType, FloatArray
-from ..univariate import entropy
-from ...bivariate import joint_entropy
+from .bivariate import joint_entropy
+from .core.types import BinType, FloatArray
+from .univariate import entropy
 
 
 def mutual_information(

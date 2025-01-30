@@ -1,10 +1,10 @@
 """Entropy Implementations."""
 
 from .bivariate import conditional_entropy, joint_entropy
+from .multivariate import multivar_joint_entropy
+from .mutual_information import mutual_information
 from .python import (
     logn_normalized_transfer_entropy,
-    multivar_joint_entropy,
-    mutual_information,
     normalized_transfer_entropy,
     transfer_entropy,
 )
