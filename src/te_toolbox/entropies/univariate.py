@@ -1,4 +1,4 @@
-"""Univariate Entropy"""
+"""Univariate Entropy."""
 
 from typing import overload
 
@@ -47,6 +47,29 @@ def _cpp_discrete_entropy(
         for i in range(n_vars):
             probs[i] = cpp.discrete_entropy(np.ravel(data[:, i]), int(n_classes[i]))
         return probs
+
+
+@overload
+def entropy(
+    data: FloatArray,
+    bins: BinType,
+    at: int,
+) -> np.float64: ...
+
+
+@overload
+def entropy(
+    data: FloatArray,
+    bins: BinType,
+) -> FloatArray: ...
+
+
+@overload
+def entropy(
+    data: FloatArray,
+    bins: BinType,
+    at: None,
+) -> FloatArray: ...
 
 
 def entropy(

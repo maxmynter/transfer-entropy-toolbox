@@ -5,7 +5,7 @@ from typing import overload
 import numpy as np
 from numba import jit
 
-from ...core.types import BinType, FloatArray, IntArray
+from ...core.types import FloatArray, IntArray
 
 
 @jit(nopython=True, fastmath=True)
@@ -55,26 +55,3 @@ def discrete_entropy(
             probs[i] = _discrete_univariate_entropy(data, n_classes, i)
 
         return probs
-
-
-@overload
-def entropy(
-    data: FloatArray,
-    bins: BinType,
-    at: int,
-) -> np.float64: ...
-
-
-@overload
-def entropy(
-    data: FloatArray,
-    bins: BinType,
-) -> FloatArray: ...
-
-
-@overload
-def entropy(
-    data: FloatArray,
-    bins: BinType,
-    at: None,
-) -> FloatArray: ...
