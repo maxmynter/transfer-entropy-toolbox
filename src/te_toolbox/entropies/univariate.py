@@ -4,8 +4,10 @@ from typing import overload
 
 import numpy as np
 
+from te_toolbox.entropies.utils import branch_funcs_by_backends
+
 from . import cpp
-from .core import MATRIX_DIMS, VECTOR_DIMS, Backend, get_backend
+from .core import MATRIX_DIMS, VECTOR_DIMS, Backend
 from .core.discretization import _discretize_nd_data
 from .core.types import BinType, FloatArray, IntArray
 from .python import univariate as python_univariate
@@ -116,10 +118,12 @@ def entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    match get_backend():
-        case Backend.PY:
-            return python_univariate.discrete_entropy(indices, n_classes, at)
-        case Backend.CPP:
-            return _cpp_discrete_entropy(indices, n_classes, at)
-        case _:
-            raise ValueError("Unkown Backend")
+    return branch_funcs_by_backends(
+        {
+            Backend.PY: python_univariate.discrete_entropy,
+            Backend.CPP: _cpp_discrete_entropy,
+        },
+        indices,
+        n_classes,
+        at,
+    )

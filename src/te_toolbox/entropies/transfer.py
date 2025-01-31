@@ -3,7 +3,8 @@
 import numpy as np
 from typing_extensions import overload
 
-from te_toolbox.entropies.core.backend import Backend, get_backend
+from te_toolbox.entropies.core.backend import Backend
+from te_toolbox.entropies.utils import branch_funcs_by_backends
 
 from . import cpp
 from .core.discretization import _discretize_nd_data
@@ -122,13 +123,16 @@ def transfer_entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    match get_backend():
-        case Backend.PY:
-            return python_discrete_transfer_entropy(indices, n_classes, lag, at)
-        case Backend.CPP:
-            return _cpp_discrete_transfer_entropy(indices, n_classes, lag, at)
-        case _:
-            raise ValueError("Unkown Backend")
+    return branch_funcs_by_backends(
+        {
+            Backend.PY: python_discrete_transfer_entropy,
+            Backend.CPP: _cpp_discrete_transfer_entropy,
+        },
+        indices,
+        n_classes,
+        lag,
+        at,
+    )
 
 
 @overload
@@ -181,14 +185,13 @@ def logn_normalized_transfer_entropy(
     indices = np.column_stack([d[0] for d in discretized])
     n_classes = [d[1] for d in discretized]
 
-    match get_backend():
-        case Backend.PY:
-            return python_discrete_logn_normalized_transfer_entropy(
-                indices, n_classes, lag, at
-            )
-        case Backend.CPP:
-            return _cpp_discrete_log_normalized_transfer_entropy(
-                indices, n_classes, lag, at
-            )
-        case _:
-            raise ValueError("Unkonwn backend")
+    return branch_funcs_by_backends(
+        {
+            Backend.PY: python_discrete_logn_normalized_transfer_entropy,
+            Backend.CPP: _cpp_discrete_log_normalized_transfer_entropy,
+        },
+        indices,
+        n_classes,
+        lag,
+        at,
+    )

@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from te_toolbox.entropies.core.backend import Backend, get_backend
+from te_toolbox.entropies.core.backend import Backend
+from te_toolbox.entropies.utils import branch_funcs_by_backends
 
 from . import cpp
 from .core.discretization import _discretize_nd_data
@@ -39,10 +40,11 @@ def multivar_joint_entropy(
     classes = [d[0] for d in discretized]
     n_classes = [d[1] for d in discretized]
 
-    match get_backend():
-        case Backend.PY:
-            return python_discrete_multivar_joint_entropy(classes, n_classes)
-        case Backend.CPP:
-            return cpp.discrete_multivar_joint_entropy(classes, n_classes)
-        case _:
-            raise ValueError("Unknown backend")
+    return branch_funcs_by_backends(
+        {
+            Backend.PY: python_discrete_multivar_joint_entropy,
+            Backend.CPP: cpp.discrete_multivar_joint_entropy,
+        },
+        classes,
+        n_classes,
+    )
