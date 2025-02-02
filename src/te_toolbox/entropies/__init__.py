@@ -3,9 +3,7 @@
 from .bivariate import conditional_entropy, joint_entropy
 from .multivariate import multivar_joint_entropy
 from .mutual_information import mutual_information
-from .python import (
-    normalized_transfer_entropy,
-)
+from .python import normalized_transfer_entropy
 from .transfer import logn_normalized_transfer_entropy, transfer_entropy
 from .univariate import entropy
 
