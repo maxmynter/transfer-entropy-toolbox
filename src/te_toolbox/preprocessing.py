@@ -15,10 +15,12 @@ def ft_surrogatization(
     (linear correlations) of the original data.
 
     Args:
+    ----
         data: Input array of shape (n_samples, n_variables)
         rng: Random number generator instance
 
     Returns:
+    -------
         Surrogate data array of same shape as input
 
     """
