@@ -10,3 +10,4 @@ dist/
 *.so
 .cache/
 *.png
+compile-commands.json
