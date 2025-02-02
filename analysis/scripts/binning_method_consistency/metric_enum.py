@@ -2,9 +2,12 @@
 
 from enum import Enum, auto
 
-from max_entropy_bins import max_logntent_bins, max_ntent_bins, max_tent_bins
-
-from te_toolbox.entropies.transfer import (
+from te_toolbox.binning.entropy_maximising import (
+    max_logntent_bins,
+    max_ntent_bins,
+    max_tent_bins,
+)
+from te_toolbox.entropies import (
     logn_normalized_transfer_entropy,
     normalized_transfer_entropy,
     transfer_entropy,

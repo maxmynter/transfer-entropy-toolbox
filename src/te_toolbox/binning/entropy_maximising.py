@@ -1,17 +1,17 @@
-"""Entropy maximising Binning."""
+"""Entropy maximising binning."""
 
 import numpy as np
 
-from te_toolbox.binning.statistical import optimize_bins
-from te_toolbox.entropies import (
+from ..entropies import (
     logn_normalized_transfer_entropy,
     normalized_transfer_entropy,
     transfer_entropy,
 )
+from .statistical import optimize_bins
 
 
 def max_tent(tent, data: np.ndarray, lag=1):
-    """Get tent maximising bins using te_toolbox.binning optimizer."""
+    """Get tent maximising bins using binning optimizer."""
     data_2d = data.reshape(-1, 2)
 
     def cost(_, bins):

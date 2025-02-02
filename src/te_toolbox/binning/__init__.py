@@ -1,5 +1,10 @@
 """Discretization and binning methods and utilities."""
 
+from te_toolbox.binning.entropy_maximising import (
+    max_logntent_bins,
+    max_ntent_bins,
+    max_tent_bins,
+)
 from te_toolbox.binning.rules import (
     doanes_bins,
     freedman_diaconis_bins,
@@ -24,6 +29,9 @@ __all__ = [
     "doanes_bins",
     "freedman_diaconis_bins",
     "knuth_bins",
+    "max_logntent_bins",
+    "max_ntent_bins",
+    "max_tent_bins",
     "rice_rule_bins",
     "scotts_rule_bins",
     "shimazaki_bins",
