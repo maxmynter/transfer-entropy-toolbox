@@ -43,7 +43,10 @@ class FuturesDataBuilder:
         df = self.df
         for instrument in Cols.all_instruments:
             df = df.with_columns(
-                pl.col(instrument.close).log().diff().alias(instrument.returns)
+                pl.col(instrument.close_returns_5m)
+                .add(1)
+                .log()
+                .alias(instrument.log_returns_5m)
             )
         return FuturesDataBuilder(df)
 
