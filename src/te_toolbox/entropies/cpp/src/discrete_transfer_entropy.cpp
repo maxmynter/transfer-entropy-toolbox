@@ -9,7 +9,7 @@ namespace fast_entropy {
 
 double discrete_transfer_entropy(const py::array_t<int64_t> &data,
                                  const std::vector<int> &n_classes, int lag) {
-
+  // Calculates TE(X->Y) for 2d array ([Y, X])
   py::buffer_info buf = data.request();
   if (buf.ndim != 2) {
     throw std::runtime_error("Input array must be 2-dimensional");

@@ -43,14 +43,14 @@ def _cpp_discrete_joint_entropy(
         n_classes = [n_classes] * n_vars
     if at is not None:
         return cpp.discrete_joint_entropy(
-            data[:, at], [n_classes[at[0]], n_classes[at[1]]]
+            np.column_stack([data[:, at[0]], data[:, at[1]]]),
+            [n_classes[at[0]], n_classes[at[1]]],
         )
     jent = np.zeros((n_vars, n_vars))
     for i in range(n_vars):
         for j in range(i, n_vars):
-            columns = np.column_stack([data[:, i], data[:, j]])
             jent[i, j] = jent[j, i] = cpp.discrete_joint_entropy(
-                columns, [n_classes[i], n_classes[j]]
+                np.column_stack([data[:, i], data[:, j]]), [n_classes[i], n_classes[j]]
             )
     return jent
 

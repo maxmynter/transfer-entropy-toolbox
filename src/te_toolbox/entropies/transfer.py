@@ -44,7 +44,9 @@ def _cpp_discrete_transfer_entropy(
     if isinstance(n_classes, int):
         n_classes = [n_classes] * dim
     if at is not None:
-        return cpp.discrete_transfer_entropy(classes, n_classes, lag)
+        return cpp.discrete_transfer_entropy(
+            np.column_stack([classes[:, at[0]], classes[:, at[1]]]), n_classes, lag
+        )
     tent = np.zeros((dim, dim))
     for i in range(dim):
         for j in range(dim):
@@ -80,7 +82,9 @@ def _cpp_discrete_log_normalized_transfer_entropy(
     if isinstance(n_classes, int):
         n_classes = [n_classes] * dim
     if at is not None:
-        return cpp.discrete_log_normalized_transfer_entropy(classes, n_classes, lag)
+        return cpp.discrete_log_normalized_transfer_entropy(
+            np.column_stack([classes[:, at[0]], classes[:, at[1]]]), n_classes, lag
+        )
     tent = np.zeros((dim, dim))
     for i in range(dim):
         for j in range(dim):
