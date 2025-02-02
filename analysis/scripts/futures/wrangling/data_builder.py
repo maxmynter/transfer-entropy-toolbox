@@ -30,6 +30,10 @@ class FuturesDataBuilder:
         """Drop columns in argument list."""
         return FuturesDataBuilder(self.df.drop(columns))
 
+    def drop_nans(self) -> "FuturesDataBuilder":
+        """Drop NaN rows."""
+        return FuturesDataBuilder(self.df.drop_nans())
+
     def drop_nulls(self) -> "FuturesDataBuilder":
         """Drop null rows."""
         return FuturesDataBuilder(self.df.drop_nulls())
