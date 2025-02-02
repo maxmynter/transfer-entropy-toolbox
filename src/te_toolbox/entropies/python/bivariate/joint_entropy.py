@@ -3,13 +3,11 @@
 from typing import overload
 
 import numpy as np
-from numba import jit
 
 from ...core import MATRIX_DIMS
 from ...core.types import FloatArray, IntArray, NClasses
 
 
-@jit(nopython=True, fastmath=True)
 def _discrete_bivariate_joint_entropy(
     data: IntArray, n_classes: list[int], at: tuple[int, int]
 ) -> np.float64:
@@ -26,7 +24,6 @@ def _discrete_bivariate_joint_entropy(
         for jj in range(p_xy.shape[1]):
             if p_xy[ii, jj] > 0:
                 entropy_sum += p_xy[ii, jj] * np.log(p_xy[ii, jj])
-
     return np.float64(-entropy_sum)
 
 

@@ -9,7 +9,7 @@ authors = [{ name = "Max Mynter" }]
 description = "A paper from my M.Sc. thesis about the problems of Transfer Entropy from discretized continuous time series."
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
-dependencies = ["numpy",  "numba"]
+dependencies = ["numpy"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff", "numpy-typing", "mypy"]

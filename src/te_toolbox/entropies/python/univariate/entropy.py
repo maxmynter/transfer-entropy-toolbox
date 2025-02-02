@@ -3,12 +3,10 @@
 from typing import overload
 
 import numpy as np
-from numba import jit
 
 from ...core.types import FloatArray, IntArray
 
 
-@jit(nopython=True, fastmath=True)
 def _discrete_univariate_entropy(
     data: IntArray, n_classes: list[int], at: int
 ) -> np.float64:
