@@ -62,6 +62,25 @@ class FuturesDataBuilder:
             )
         return FuturesDataBuilder(df)
 
+    def drop_incomplete_trading_days(self, min_bars: int) -> "FuturesDataBuilder":
+        """Drop all rows from dates taht have fewer than min_bars observations.
+
+        Args:
+            min_bars: minimum number of rows per date (274 is a full trading day)
+
+        """
+        count_col = "count"
+        valid_dates = (
+            self.df.group_by(pl.col(Cols.Date).dt.date())
+            .agg(pl.len().alias(count_col))
+            .filter(pl.col(count_col) >= min_bars)
+            .get_column(Cols.Date)
+        )
+
+        return FuturesDataBuilder(
+            self.df.filter(pl.col(Cols.Date).dt.date().is_in(valid_dates))
+        )
+
     def slice_after(self, timestamp: datetime) -> "FuturesDataBuilder":
         """Take all rows after timestamp (inclusive)."""
         df = self.df.filter(pl.col(Cols.Date) >= timestamp)

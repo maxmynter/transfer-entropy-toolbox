@@ -12,4 +12,6 @@ class FuturesDataInfo(Enum):
     no_missing_end: datetime = datetime(2020, 5, 15, 11, 25)
 
 
+MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.
+
 DATA_PATH = Path("analysis/data/full_futures/full_futures.csv")

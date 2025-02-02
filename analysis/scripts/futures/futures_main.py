@@ -1,6 +1,6 @@
 """Analyse the futures time series during COVID."""
 
-from futures_constants import DATA_PATH, FuturesDataInfo
+from futures_constants import DATA_PATH, MIN_TICKS_PER_DAY, FuturesDataInfo
 from wrangling import Cols, FuturesDataBuilder
 
 date_return_cols = [
@@ -23,6 +23,7 @@ if __name__ == "__main__":
         .slice_after(FuturesDataInfo.no_missing_start)
         .slice_before(FuturesDataInfo.no_missing_end)
         .log_returns()
+        .drop_incomplete_trading_days(MIN_TICKS_PER_DAY)
         .build()
         .select(date_return_cols)
     )
