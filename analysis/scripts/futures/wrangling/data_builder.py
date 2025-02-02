@@ -46,7 +46,6 @@ class FuturesDataBuilder:
     def drop_ticks(self) -> "FuturesDataBuilder":
         """Drop ticks columns (they contain many NANs in raw data)."""
         df = self.df
-        print(df.columns)
         for instrument in Cols.all_instruments:
             df = df.drop(instrument.ticks) if instrument.ticks in df.columns else df
         return FuturesDataBuilder(df)
