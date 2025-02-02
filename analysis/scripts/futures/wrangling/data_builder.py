@@ -66,6 +66,7 @@ class FuturesDataBuilder:
         """Drop all rows from dates taht have fewer than min_bars observations.
 
         Args:
+        ----
             min_bars: minimum number of rows per date (274 is a full trading day)
 
         """
