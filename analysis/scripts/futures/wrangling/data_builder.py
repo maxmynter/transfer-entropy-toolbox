@@ -47,7 +47,11 @@ class FuturesDataBuilder:
         """Drop ticks columns (they contain many NANs in raw data)."""
         df = self.df
         for instrument in Cols.all_instruments:
-            df = df.drop(instrument.ticks) if instrument.ticks in df.columns else df
+            df = (
+                df.drop(instrument.ticks_5m)
+                if instrument.ticks_5m in df.columns
+                else df
+            )
         return FuturesDataBuilder(df)
 
     def volume_weighted_close(self) -> "FuturesDataBuilder":
@@ -55,9 +59,9 @@ class FuturesDataBuilder:
         df = self.df
         for instrument in Cols.all_instruments:
             df = df.with_columns(
-                (pl.col(instrument.close) * pl.col(instrument.volume)).alias(
-                    instrument.volume_weighted
-                )
+                (
+                    pl.col(instrument.close_returns_5m) * pl.col(instrument.volume_5m)
+                ).alias(instrument.volume_weighted)
             )
         return FuturesDataBuilder(df)
 
@@ -66,7 +70,7 @@ class FuturesDataBuilder:
         df = self.df
         for instrument in Cols.all_instruments:
             df = df.with_columns(
-                pl.col(instrument.returns)
+                pl.col(instrument.log_returns_5m)
                 .rolling_std(window)
                 .alias(instrument.volatility)
             )

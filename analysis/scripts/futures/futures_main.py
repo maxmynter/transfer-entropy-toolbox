@@ -3,28 +3,28 @@
 from futures_constants import DATA_PATH
 from wrangling import Cols, FuturesDataBuilder
 
+date_return_cols = [
+    Cols.Date,
+    Cols.VG.log_returns_5m,
+    Cols.ES.log_returns_5m,
+    Cols.HS.log_returns_5m,
+    Cols.NK.log_returns_5m,
+    Cols.CO.log_returns_5m,
+]
+
 if __name__ == "__main__":
     futures = FuturesDataBuilder.load(DATA_PATH)
-    print(
-        futures.with_datetime_index()
-        .drop_ticks()
-        .log_returns()
-        .drop_nulls()
-        .build()
-        .select([Cols.Date, Cols.VG.close, Cols.VG.returns])
-        .head(n=15)
-    )
+
     df = (
         futures.with_datetime_index()
+        .drop_ticks()
+        .drop_nans()
         .drop_nulls()
         .log_returns()
-        .volatility()
-        .volume_weighted_close()
         .build()
+        .select(date_return_cols)
     )
 
-    print(
-        df.select(
-            [Cols.Date, Cols.NK.close, Cols.NK.returns, Cols.NK.volatility]
-        ).head()
-    )
+    print(df.head())
+    print(df.tail())
+    print(df.describe())
