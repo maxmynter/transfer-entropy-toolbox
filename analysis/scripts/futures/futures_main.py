@@ -1,6 +1,6 @@
 """Analyse the futures time series during COVID."""
 
-from futures_constants import DATA_PATH
+from futures_constants import DATA_PATH, FuturesDataInfo
 from wrangling import Cols, FuturesDataBuilder
 
 date_return_cols = [
@@ -20,6 +20,8 @@ if __name__ == "__main__":
         .drop_ticks()
         .drop_nans()
         .drop_nulls()
+        .slice_after(FuturesDataInfo.no_missing_start)
+        .slice_before(FuturesDataInfo.no_missing_end)
         .log_returns()
         .build()
         .select(date_return_cols)

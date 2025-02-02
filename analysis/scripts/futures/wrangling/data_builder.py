@@ -1,5 +1,6 @@
 """Dataset builder for the futures data frame."""
 
+from datetime import datetime
 from pathlib import Path
 
 import polars as pl
@@ -59,6 +60,16 @@ class FuturesDataBuilder:
                 if instrument.ticks_5m in df.columns
                 else df
             )
+        return FuturesDataBuilder(df)
+
+    def slice_after(self, timestamp: datetime) -> "FuturesDataBuilder":
+        """Take all rows after timestamp (inclusive)."""
+        df = self.df.filter(pl.col(Cols.Date) >= timestamp)
+        return FuturesDataBuilder(df)
+
+    def slice_before(self, timestamp: datetime) -> "FuturesDataBuilder":
+        """Take all rows before timestamp (inclusive)."""
+        df = self.df.filter(pl.col(Cols.Date) <= timestamp)
         return FuturesDataBuilder(df)
 
     def volume_weighted_close(self) -> "FuturesDataBuilder":
