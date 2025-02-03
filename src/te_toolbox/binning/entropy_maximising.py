@@ -10,13 +10,13 @@ from ..entropies import (
 from .statistical import optimize_bins
 
 
-def max_tent(tent, data: np.ndarray, lag=1):
+def max_tent(tent, data: np.ndarray, lag=1, at: tuple[int, int] = (0, 1)):
     """Get tent maximising bins using binning optimizer."""
     data_2d = data.reshape(-1, 2)
 
     def cost(_, bins):
         try:
-            return tent(data_2d, bins, lag, at=(1, 0))
+            return tent(data_2d, bins, lag, at=at)
         except Exception:
             print("Error calculating Max Entropy")
             return float("inf")
