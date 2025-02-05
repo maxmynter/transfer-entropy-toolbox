@@ -1,7 +1,5 @@
 """Analyse the futures time series during COVID."""
 
-from datetime import timedelta
-
 import numpy as np
 import polars as pl
 from futures_constants import (
@@ -12,7 +10,7 @@ from futures_constants import (
     FuturesDataInfo,
     TimeGranularity,
 )
-from wrangling import Cols, FuturesColumnGroup, FuturesDataBuilder
+from wrangling import Cols, FuturesDataBuilder, InstrumentCols
 
 from te_toolbox.binning.entropy_maximising import max_tent
 
@@ -27,8 +25,8 @@ date_return_cols = [
 
 
 def get_transfer_entropy(
-    src: FuturesColumnGroup,
-    tgt: FuturesColumnGroup,
+    src: InstrumentCols,
+    tgt: InstrumentCols,
     df: pl.DataFrame,
     tent: TE = TE.LOGN,
 ) -> np.float64:
@@ -44,7 +42,7 @@ def get_transfer_entropy(
 
 def build_te_df(
     df: pl.DataFrame,
-    cols=list[FuturesColumnGroup],
+    cols=list[InstrumentCols],
     granularity: TimeGranularity = TimeGranularity.DAY,
     tent: TE = TE.LOGN,
 ) -> pl.DataFrame:
@@ -85,12 +83,10 @@ if __name__ == "__main__":
 
     df = (
         futures.with_datetime_index()
-        .drop_ticks()
-        .drop_nans()
         .drop_nulls()
-        .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=4))
+        # .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=3))
         .slice_after(FuturesDataInfo.no_missing_start.value)
-        # .slice_before(FuturesDataInfo.no_missing_end.value)
+        .slice_before(FuturesDataInfo.no_missing_end.value)
         .log_returns()
         .drop_incomplete_trading_days(MIN_TICKS_PER_DAY)
         .build()
@@ -98,12 +94,17 @@ if __name__ == "__main__":
     )
 
     print(df.head())
-    print(df.tail())
     print(df.describe())
 
     # TODO: Use autocorrelation function to determine lag
+    te_test = TE.TENT(
+        np.column_stack([df[Cols.CO.log_returns_5m, Cols.ES.log_returns_5m]]),
+        np.array([-10, 0, 10]),
+        LAG,
+    )
+    print(te_test)
 
-    tents = build_te_df(df, Cols.all_instruments, TimeGranularity.DAY, tent=TE.LOGN)
-    print("=== TENTS === ")
-    print(tents.head())
-    print(tents.describe())
+    # tents = build_te_df(df, [Cols.CO, Cols.ES], TimeGranularity.WEEK, tent=TE.LOGN)
+    # print("=== TENTS === ")
+    # print(tents.head())
+    # print(tents.describe())

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import polars as pl
 
-from .columns import Cols
+from .columns import Cols, Instruments
 
 
 class FuturesDataBuilder:
@@ -23,7 +23,7 @@ class FuturesDataBuilder:
     def with_datetime_index(self) -> "FuturesDataBuilder":
         """Coerce the date column to a datetime index."""
         df = self.df.with_columns(
-            pl.col(Cols.Date).str.strptime(pl.Date, format="%Y-%m-%d %H:%M:%S")
+            pl.col(Cols.Date).str.strptime(pl.Date, format="%d.%m.%y %H:%M")
         )
         return FuturesDataBuilder(df)
 
@@ -42,23 +42,11 @@ class FuturesDataBuilder:
     def log_returns(self) -> "FuturesDataBuilder":
         """Create log returns column."""
         df = self.df
-        for instrument in Cols.all_instruments:
-            df = df.with_columns(
-                pl.col(instrument.close_returns_5m)
-                .add(1)
-                .log()
-                .alias(instrument.log_returns_5m)
-            )
-        return FuturesDataBuilder(df)
+        for instrument in Instruments:
+            inst = getattr(Cols, instrument.name)
 
-    def drop_ticks(self) -> "FuturesDataBuilder":
-        """Drop ticks columns (they contain many NANs in raw data)."""
-        df = self.df
-        for instrument in Cols.all_instruments:
-            df = (
-                df.drop(instrument.ticks_5m)
-                if instrument.ticks_5m in df.columns
-                else df
+            df = df.with_columns(
+                pl.col(inst.returns).add(1).log().alias(inst.log_returns_5m)
             )
         return FuturesDataBuilder(df)
 
@@ -90,28 +78,6 @@ class FuturesDataBuilder:
     def slice_before(self, timestamp: datetime) -> "FuturesDataBuilder":
         """Take all rows before timestamp (inclusive)."""
         df = self.df.filter(pl.col(Cols.Date) <= timestamp)
-        return FuturesDataBuilder(df)
-
-    def volume_weighted_close(self) -> "FuturesDataBuilder":
-        """Create volume weighted close columns."""
-        df = self.df
-        for instrument in Cols.all_instruments:
-            df = df.with_columns(
-                (
-                    pl.col(instrument.close_returns_5m) * pl.col(instrument.volume_5m)
-                ).alias(instrument.volume_weighted)
-            )
-        return FuturesDataBuilder(df)
-
-    def volatility(self, window: int = 20) -> "FuturesDataBuilder":
-        """Create volatility columns."""
-        df = self.df
-        for instrument in Cols.all_instruments:
-            df = df.with_columns(
-                pl.col(instrument.log_returns_5m)
-                .rolling_std(window)
-                .alias(instrument.volatility)
-            )
         return FuturesDataBuilder(df)
 
     def build(self) -> pl.DataFrame:
