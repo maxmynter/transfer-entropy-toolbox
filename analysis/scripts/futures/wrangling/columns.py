@@ -1,6 +1,6 @@
 """Single Source of truth for columns of the Futures Dataframe."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -40,11 +40,18 @@ class ColsAccessor:
     """Futures data column accessor."""
 
     Date = "Date"
+    _instruments: dict[str, InstrumentCols] = field(default_factory=dict)
 
     def __init__(self):
         """Initialilze all Instrument columns from Instruments Enum."""
         for inst in Instruments:
-            setattr(self, inst.name, InstrumentCols(inst.value))
+            self._instruments[inst.name] = InstrumentCols(inst.value)
+
+    def __getattr__(self, instrument_name):
+        """Get the instrument columns."""
+        if instrument_name in self._instruments:
+            return self._instruments[instrument_name]
+        raise AttributeError(f"ColsAccessor has no attribute {instrument_name}")
 
 
 Cols = ColsAccessor()
