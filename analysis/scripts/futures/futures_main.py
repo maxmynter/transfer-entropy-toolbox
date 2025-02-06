@@ -52,13 +52,14 @@ def prepare_data(
     return data, at
 
 
-def get_maximised_transfer_entropy(
-    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
+def get_transfer_entropy_for_bins(
+    src: InstrumentCols,
+    tgt: InstrumentCols,
+    df: pl.DataFrame,
+    bins: npt.NDArray,
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
-
-    bins = max_tent(config.TE, data, lag=config.LAG, at=at)
     return np.float64(config.TE(data, bins, config.LAG, at))
 
 
@@ -74,18 +75,17 @@ def get_normalized_quantil_binned_te(
         [data.min(), np.quantile(data, 0.05), 0.0, np.quantile(data, 0.95), data.max()]
     )
 
-    return np.float64(config.TE(data, bins, config.LAG, at))
+    return get_transfer_entropy_for_bins(src, tgt, df, bins)
 
 
-def get_transfer_entropy_for_bins(
-    src: InstrumentCols,
-    tgt: InstrumentCols,
-    df: pl.DataFrame,
-    bins: npt.NDArray,
+def get_maximised_transfer_entropy(
+    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
-    return np.float64(config.TE(data, bins, config.LAG, at))
+
+    bins = max_tent(config.TE, data, lag=config.LAG, at=at)
+    return get_transfer_entropy_for_bins(src, tgt, df, bins)
 
 
 def build_pairwise_measure_df(
