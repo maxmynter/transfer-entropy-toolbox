@@ -50,6 +50,10 @@ class TentCalcConfig:
 
 MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.
 
-DATA_PATH = Path("analysis/data/full_futures/futures_returns.csv")
+DATA_PATH = Path("analysis/data/full_futures/")
+
+RETURNS_DATA = DATA_PATH / Path("futures_returns.csv")
+
+TE_DATA_PATH = DATA_PATH / Path("transfer_entropies_bootstrap.csv")
 PLOT_PATH = Path("analysis/plots/full_futures/")
 PLOT_PATH.mkdir(exist_ok=True)
