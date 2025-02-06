@@ -109,7 +109,7 @@ def remap_to(
 
     Args:
     ----
-        data: Source data array of shape (n_timesteps, n_variables)
+        data: Source data array of shape (n_timesteps, n_variables) or (n_timesteps)
         distribution: Target distribution array of shape (n_timesteps, n_variables)
         rng: Optional random number generator for tie-breaking
 
@@ -118,18 +118,23 @@ def remap_to(
         Remapped array with distribution's values following data's temporal pattern
 
     """
-    if data.shape != distribution.shape:
+    data_2d = data.reshape(-1, 1) if data.ndim == 1 else data
+    dist_2d = distribution.reshape(-1, 1) if data.ndim == 1 else distribution
+
+    if data_2d.shape != dist_2d.shape:
         raise ValueError(
-            f"Shape mismatch: data {data.shape} != distribution {distribution.shape}"
+            f"Shape mismatch: data {data_2d.shape} != distribution {distribution.shape}"
         )
     if rng is not None:
         # Add tiny random noise for tie-breaking
-        random_noise = rng.random(size=data.shape) * 1e-10
-        data_with_noise = data + random_noise
+        random_noise = rng.random(size=data_2d.shape) * 1e-10
+        data_with_noise = data_2d + random_noise
     else:
-        data_with_noise = data
+        data_with_noise = data_2d
 
     ranks = np.argsort(np.argsort(data_with_noise, axis=0), axis=0)
-    sorted_dist = np.sort(distribution, axis=0)
+    sorted_dist = np.sort(dist_2d, axis=0)
+    result = sorted_dist[ranks, np.arange(data_2d.shape[1])]
 
-    return sorted_dist[ranks, np.arange(data.shape[1])]
+    # Return 1D if input was 1D
+    return np.array(result.flatten() if data.ndim == 1 else result, dtype=np.float64)
