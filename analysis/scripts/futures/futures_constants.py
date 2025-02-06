@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+import numpy as np
 from wrangling.columns import ReturnType
 
 from te_toolbox.entropies.transfer import (
@@ -44,6 +45,7 @@ class TentCalcConfig:
     n_bootstrap: int = 100
     on_column: ReturnType = ReturnType.UNIFORM
     granularity: TimeGranularity = TimeGranularity.DAY
+    rng = np.random.default_rng()
 
 
 MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.

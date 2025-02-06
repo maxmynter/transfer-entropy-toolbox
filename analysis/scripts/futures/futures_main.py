@@ -52,6 +52,19 @@ def prepare_data(
     return data, at
 
 
+def bootstrapped_te_mean(
+    data: npt.NDArray, bins: npt.NDArray, at: tuple[int, int]
+) -> np.float64:
+    """Calculate the mean of TE of permuted values."""
+    boot_te = np.zeros(config.n_bootstrap)
+    for i in range(config.n_bootstrap):
+        bs_data = data.copy()
+        bs_data[:, 0] = config.rng.permutation(data[:, 0])
+        bs_data[:, 1] = config.rng.permutation(data[:, 1])
+        boot_te[i] = config.TE(bs_data, bins, config.LAG, at)
+    return np.mean(boot_te)
+
+
 def get_transfer_entropy_for_bins(
     src: InstrumentCols,
     tgt: InstrumentCols,
@@ -60,10 +73,11 @@ def get_transfer_entropy_for_bins(
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
-    return np.float64(config.TE(data, bins, config.LAG, at))
+    te = np.float64(config.TE(data, bins, config.LAG, at))
+    return te - bootstrapped_te_mean(data, bins, at)
 
 
-def get_normalized_quantil_binned_te(
+def get_quantil_binned_te(
     src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
 ) -> np.float64:
     """Calculate TE for fixed with quantil bins.
@@ -78,7 +92,7 @@ def get_normalized_quantil_binned_te(
     return get_transfer_entropy_for_bins(src, tgt, df, bins)
 
 
-def get_maximised_transfer_entropy(
+def get_maximised_te(
     src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
@@ -149,7 +163,7 @@ def plot_acf(acf_df):
 
 
 if __name__ == "__main__":
-    rng = np.random.default_rng(42)
+    rng = config.rng
     futures = FuturesDataBuilder.load(DATA_PATH)
 
     df_builder = (
@@ -182,9 +196,7 @@ if __name__ == "__main__":
             cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
         ).build(),
         analysis_cols,
-        lambda src, tgt, df: get_transfer_entropy_for_bins(
-            src, tgt, df, np.array([-1, 0, 1])
-        ),
+        lambda src, tgt, df: get_maximised_te(src, tgt, df),
     )
 
     plot_ts(
