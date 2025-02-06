@@ -13,11 +13,12 @@ class Backend(Enum):
 _backend = Backend.CPP
 
 
-def set_backend(backend: str) -> None:
+def set_backend(backend: str | Backend) -> None:
     """Set the global backend variable."""
     global _backend  # noqa: PLW0603 # Use the global state to configure the backend
     try:
-        _backend = next(b for b in Backend if b.value == backend.lower())
+        backend_value = backend.value if isinstance(backend, Backend) else backend
+        _backend = next(b for b in Backend if b.value == backend_value.lower())
     except StopIteration:
         valid_backends = [b.value for b in Backend]
         raise ValueError(
