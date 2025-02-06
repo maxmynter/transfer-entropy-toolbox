@@ -3,9 +3,12 @@
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 
-from .columns import Cols, Instruments
+from te_toolbox.preprocessing import remap_to
+
+from .columns import Cols, InstrumentCols, Instruments
 
 
 class FuturesDataBuilder:
@@ -78,6 +81,29 @@ class FuturesDataBuilder:
     def slice_before(self, timestamp: datetime) -> "FuturesDataBuilder":
         """Take all rows before timestamp (inclusive)."""
         df = self.df.filter(pl.col(Cols.Date) <= timestamp)
+        return FuturesDataBuilder(df)
+
+    def remap_uniform(
+        self,
+        cols: list[InstrumentCols],
+        source_col=InstrumentCols.returns_5m,
+        rng: np.random.Generator | None = None,
+    ) -> "FuturesDataBuilder":
+        """Remap the data rank ordered to the uniform [0,1] interval."""
+        df = self.df
+        for col in cols:
+            source_name = source_col.__get__(col)
+            target_name = col.unif_remap_returns
+            df = df.with_columns(
+                pl.Series(
+                    target_name,
+                    remap_to(
+                        df[source_name].to_numpy(),
+                        np.random.uniform(low=0, high=1, size=len(df[source_name])),
+                        rng,
+                    ),
+                )
+            )
         return FuturesDataBuilder(df)
 
     def build(self) -> pl.DataFrame:
