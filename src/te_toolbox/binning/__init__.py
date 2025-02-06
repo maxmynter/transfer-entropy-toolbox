@@ -2,8 +2,11 @@
 
 from te_toolbox.binning.entropy_maximising import (
     max_logntent_bins,
+    max_logntent_bootstrap_bins,
     max_ntent_bins,
+    max_ntent_bootstrap_bins,
     max_tent_bins,
+    max_tent_bootstrap,
 )
 from te_toolbox.binning.rules import (
     doanes_bins,
@@ -30,8 +33,11 @@ __all__ = [
     "freedman_diaconis_bins",
     "knuth_bins",
     "max_logntent_bins",
+    "max_logntent_bootstrap_bins",
     "max_ntent_bins",
+    "max_ntent_bootstrap_bins",
     "max_tent_bins",
+    "max_tent_bootstrap",
     "rice_rule_bins",
     "scotts_rule_bins",
     "shimazaki_bins",

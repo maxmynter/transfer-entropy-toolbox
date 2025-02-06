@@ -48,15 +48,15 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
 
     """
     n = len(data)
-    n_min = max(2, int(np.sqrt(n) * 0.1)) + 1  # Convert bins to edges
-    n_max = min(n, int(np.sqrt(n) * 10)) + 1
+    min_edges = 3
+    max_edges = min(n, int(np.sqrt(n) * 10)) + 1
 
     costs = []
     best_cost = float("inf") if minimize else float("-inf")
-    best_n = n_min
+    best_n = min_edges
 
     # Walk initial window size for moving average calculation
-    for n_bins in range(n_min, n_min + window_size):
+    for n_bins in range(min_edges, min_edges + window_size):
         bins = np.linspace(np.min(data), np.max(data), n_bins)
         hist, _ = np.histogram(data, bins)
         cost = cost_function(hist, bins)
@@ -70,7 +70,7 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
     stationary_count = 0
     last_avg = np.mean(costs[-window_size:])
 
-    for n_bins in range(n_min + window_size, n_max):
+    for n_bins in range(min_edges + window_size, max_edges):
         bins = np.linspace(np.min(data), np.max(data), n_bins)
         hist, _ = np.histogram(data, bins)
         cost = cost_function(hist, bins)
@@ -79,7 +79,7 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
         if (minimize and cost < best_cost) or (not minimize and cost > best_cost):
             best_cost = cost
             best_n = n_bins
-            # Reset counters
+
             worse_trend_count = 0
             stationary_count = 0
 
@@ -105,9 +105,9 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
 
             last_avg = current_avg
     else:
-        if n_max < n:
+        if max_edges < n:
             logger.warning(
-                f"Warning: exited bin optimization after {n_max} bins without "
+                f"Warning: exited bin optimization after {max_edges} bins without "
                 f"identifying optimum. Method: {method}."
             )
 
