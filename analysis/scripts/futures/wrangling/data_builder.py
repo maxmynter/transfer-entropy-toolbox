@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 
 from te_toolbox.preprocessing import remap_to
@@ -83,15 +84,18 @@ class FuturesDataBuilder:
         df = self.df.filter(pl.col(Cols.Date) <= timestamp)
         return FuturesDataBuilder(df)
 
-    def remap_uniform(
+    def remap_to(
         self,
+        distribution: npt.NDArray,
         cols: list[InstrumentCols],
         source_col=InstrumentCols.returns_5m,
         rng: np.random.Generator | None = None,
     ) -> "FuturesDataBuilder":
-        """Remap the data rank ordered to the uniform [-1,1] interval."""
+        """Rank ordered remapping of supplied cols onto distribution."""
+        if distribution.ndim == 1 and len(cols) > 1:
+            raise ValueError("Mismatched distribution and data shape")
         df = self.df
-        for col in cols:
+        for i, col in enumerate(cols):
             source_name = source_col.__get__(col)
             target_name = col.unif_remap_returns
             df = df.with_columns(
@@ -99,12 +103,41 @@ class FuturesDataBuilder:
                     target_name,
                     remap_to(
                         df[source_name].to_numpy(),
-                        np.random.uniform(low=-1, high=1, size=len(df[source_name])),
+                        distribution[:, i] if len(cols) > 1 else distribution,
                         rng,
                     ),
                 )
             )
         return FuturesDataBuilder(df)
+
+    def remap_gaussian(
+        self,
+        cols: list[InstrumentCols],
+        source_col=InstrumentCols.returns_5m,
+        rng: np.random.Generator | None = None,
+    ) -> "FuturesDataBuilder":
+        """Remap onto a gaussian normal distribution."""
+        distribution = np.random.normal(size=(len(self.df), len(cols)))
+
+        return self.remap_to(
+            distribution=distribution, cols=cols, source_col=source_col, rng=rng
+        )
+        return self.remap_to(
+            distribution=distribution, cols=cols, source_col=source_col, rng=rng
+        )
+
+    def remap_uniform(
+        self,
+        cols: list[InstrumentCols],
+        source_col=InstrumentCols.returns_5m,
+        rng: np.random.Generator | None = None,
+    ) -> "FuturesDataBuilder":
+        """Remap the data rank ordered to the uniform [-1,1] interval."""
+        distribution = np.random.uniform(low=-1, high=1, size=(len(self.df), len(cols)))
+
+        return self.remap_to(
+            distribution=distribution, cols=cols, source_col=source_col, rng=rng
+        )
 
     def build(self) -> pl.DataFrame:
         """Unwrap the dataframe from builder."""
