@@ -49,7 +49,7 @@ class FuturesDataBuilder:
             inst = getattr(Cols, instrument.name)
 
             df = df.with_columns(
-                pl.col(inst.returns).add(1).log().alias(inst.log_returns_5m)
+                pl.col(inst.returns_5m).add(1).log().alias(inst.log_returns_5m)
             )
         return FuturesDataBuilder(df)
 
