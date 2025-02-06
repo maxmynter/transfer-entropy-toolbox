@@ -62,7 +62,7 @@ def bootstrapped_te_mean(
         bs_data[:, 0] = config.rng.permutation(data[:, 0])
         bs_data[:, 1] = config.rng.permutation(data[:, 1])
         boot_te[i] = config.TE(bs_data, bins, config.LAG, at)
-    return np.mean(boot_te)
+    return np.mean(boot_te, dtype=np.float64)
 
 
 def get_transfer_entropy_for_bins(
@@ -74,7 +74,7 @@ def get_transfer_entropy_for_bins(
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
     te = np.float64(config.TE(data, bins, config.LAG, at))
-    return te - bootstrapped_te_mean(data, bins, at)
+    return np.max([0, te - bootstrapped_te_mean(data, bins, at)])
 
 
 def get_quantil_binned_te(
