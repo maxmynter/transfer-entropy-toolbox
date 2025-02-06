@@ -23,7 +23,7 @@ class ReturnType(Enum):
 
     RAW = "returns"
     LOG = "log returns (5m)"
-    UNIFORM = "return mapped unif. [0,1]"
+    UNIFORM = "return mapped unif. [-1,1]"
 
 
 @dataclass(frozen=True)

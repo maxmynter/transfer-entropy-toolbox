@@ -89,7 +89,7 @@ class FuturesDataBuilder:
         source_col=InstrumentCols.returns_5m,
         rng: np.random.Generator | None = None,
     ) -> "FuturesDataBuilder":
-        """Remap the data rank ordered to the uniform [0,1] interval."""
+        """Remap the data rank ordered to the uniform [-1,1] interval."""
         df = self.df
         for col in cols:
             source_name = source_col.__get__(col)
@@ -99,7 +99,7 @@ class FuturesDataBuilder:
                     target_name,
                     remap_to(
                         df[source_name].to_numpy(),
-                        np.random.uniform(low=0, high=1, size=len(df[source_name])),
+                        np.random.uniform(low=-1, high=1, size=len(df[source_name])),
                         rng,
                     ),
                 )

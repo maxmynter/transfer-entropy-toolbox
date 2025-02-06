@@ -41,6 +41,7 @@ class TentCalcConfig:
 
     TE: TE = TE.LOGN
     LAG = 3
+    n_bootstrap: int = 100
     on_column: ReturnType = ReturnType.UNIFORM
     granularity: TimeGranularity = TimeGranularity.DAY
 
