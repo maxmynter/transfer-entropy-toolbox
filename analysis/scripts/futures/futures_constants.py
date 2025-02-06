@@ -1,8 +1,11 @@
 """Constants for the Futures Time Series Analysis."""
 
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+
+from wrangling.columns import ReturnType
 
 from te_toolbox.entropies.transfer import (
     logn_normalized_transfer_entropy,
@@ -32,8 +35,18 @@ class FuturesDataInfo(Enum):
     no_missing_end: datetime = datetime(2020, 5, 15, 11, 25)
 
 
-LAG = 1
+@dataclass
+class TentCalcConfig:
+    """Configure the TE Calculation."""
+
+    TE: TE = TE.LOGN
+    LAG = 3
+    on_column: ReturnType = ReturnType.UNIFORM
+    granularity: TimeGranularity = TimeGranularity.DAY
+
 
 MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.
 
 DATA_PATH = Path("analysis/data/full_futures/futures_returns.csv")
+PLOT_PATH = Path("analysis/plots/full_futures/")
+PLOT_PATH.mkdir(exist_ok=True)

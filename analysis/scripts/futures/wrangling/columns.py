@@ -18,21 +18,38 @@ class Instruments(Enum):
         return self.value
 
 
+class ReturnType(Enum):
+    """Types of returns available in the dataset."""
+
+    RAW = "returns"
+    LOG = "log returns (5m)"
+    UNIFORM = "return mapped unif. [0,1]"
+
+
 @dataclass(frozen=True)
 class InstrumentCols:
     """Holds columns corresponding to an instrument."""
 
     base: str
 
+    def get_returns(self, ret_type: ReturnType) -> str:
+        """Get column name for any return type."""
+        return f"{self.base} {ret_type.value}"
+
     @property
-    def returns(self) -> str:
+    def returns_5m(self) -> str:
         """Return the returns column name."""
-        return f"{self.base} returns"
+        return self.get_returns(ReturnType.RAW)
 
     @property
     def log_returns_5m(self) -> str:
         """Return the log returns column name."""
-        return f"{self.base} log returns (5m)"
+        return self.get_returns(ReturnType.LOG)
+
+    @property
+    def unif_remap_returns(self) -> str:
+        """Return the column name of the uniform remaps."""
+        return self.get_returns(ReturnType.UNIFORM)
 
 
 @dataclass
@@ -50,6 +67,33 @@ class Columns:
         """Initialilze all Instrument columns from Instruments Enum."""
         for inst in Instruments:
             setattr(self, inst.name, InstrumentCols(inst.value))
+
+    def get_all_returns(self, return_type: ReturnType) -> list[str]:
+        """Get all return columns of a specific type."""
+        return [
+            getattr(self, inst.name).get_returns(return_type) for inst in Instruments
+        ]
+
+
+class TEColumns:
+    """Contains the TE column names."""
+
+    @classmethod
+    def get_te_column_name(cls, src: InstrumentCols, tgt: InstrumentCols) -> str:
+        """Get TE from to column name."""
+        return f"{src.base}->{tgt.base}"
+
+    @classmethod
+    def get_pairwise_te_column_names(
+        cls, instruments: list[InstrumentCols]
+    ) -> list[str]:
+        """Get column names for all TE pairs."""
+        return [
+            cls.get_te_column_name(src, tgt)
+            for src in instruments
+            for tgt in instruments
+            if src != tgt
+        ]
 
 
 Cols = Columns()
