@@ -42,22 +42,22 @@ def plot_ts(df: pl.DataFrame, cols: list[str], filename="ts.png"):
 
 def prepare_data(
     src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
-) -> npt.NDArray:
+) -> tuple[npt.NDArray, tuple[int, int]]:
     """Prepare the data arrays for TE calculation."""
     source = df[src.get_returns(config.on_column)]
     target = df[tgt.get_returns(config.on_column)]
 
     data = np.column_stack([target, source])
-    return data
+    at = (0, 1)  # TE source -> target for [target, source]
+    return data, at
 
 
 def get_maximised_transfer_entropy(
     src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
-    data = prepare_data(src, tgt, df)
+    data, at = prepare_data(src, tgt, df)
 
-    at = (0, 1)  # TE source -> target for [target, source]
     bins = max_tent(config.TE, data, lag=config.LAG, at=at)
     return np.float64(config.TE(data, bins, config.LAG, at))
 
@@ -69,13 +69,12 @@ def get_normalized_quantil_binned_te(
 
     (added for consistency checks with 2021 M.Sc. thesis consistency).
     """
-    data = prepare_data(src, tgt, df)
-
+    data, at = prepare_data(src, tgt, df)
     bins = np.array(
         [data.min(), np.quantile(data, 0.05), 0.0, np.quantile(data, 0.95), data.max()]
     )
 
-    return np.float64(config.TE(data, bins, config.LAG, (0, 1)))
+    return np.float64(config.TE(data, bins, config.LAG, at))
 
 
 def get_transfer_entropy_for_bins(
@@ -85,8 +84,7 @@ def get_transfer_entropy_for_bins(
     bins: npt.NDArray,
 ) -> np.float64:
     """Calculate TE between variables for dataset."""
-    data = prepare_data(src, tgt, df)
-    at = (0, 1)  # TE source -> target for [target, source]
+    data, at = prepare_data(src, tgt, df)
     return np.float64(config.TE(data, bins, config.LAG, at))
 
 
