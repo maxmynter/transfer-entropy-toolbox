@@ -7,15 +7,15 @@ import numpy as np
 import numpy.typing as npt
 import polars as pl
 from futures_constants import (
-    DATA_PATH,
     MIN_TICKS_PER_DAY,
     PLOT_PATH,
+    RETURNS_DATA,
+    TE_DATA_PATH,
     TentCalcConfig,
-    TimeGranularity,
 )
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
 
-from te_toolbox.binning.entropy_maximising import max_tent
+from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
 from te_toolbox.stats import autocorrelation
 
 config = TentCalcConfig()
@@ -34,7 +34,7 @@ def plot_ts(df: pl.DataFrame, cols: list[str], filename="ts.png"):
     """Plot the timeseries."""
     fig, ax = plt.subplots(figsize=(12, 5))
     for col in cols:
-        ax.plot(df[col], label=col, alpha=0.6)
+        ax.plot(df[Cols.Date], df[col], label=col, alpha=0.6)
     ax.legend()
     plt.savefig(PLOT_PATH / filename)
     plt.close()
@@ -102,45 +102,14 @@ def get_maximised_te(
     return get_transfer_entropy_for_bins(src, tgt, df, bins)
 
 
-def build_pairwise_measure_df(
-    df: pl.DataFrame,
-    cols: list[InstrumentCols],
-    measure: Callable[[InstrumentCols, InstrumentCols, pl.DataFrame], np.float64],
-) -> pl.DataFrame:
-    """Build a per day TE dataframe from df."""
-    filter_alias = "filter_var"
+def get_bootstrap_maximised_te(
+    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
+) -> np.float64:
+    """Calculate TE between variables for dataset."""
+    data, at = prepare_data(src, tgt, df)
 
-    timesteps = (
-        df.select(
-            pl.col(Cols.Date).dt.truncate(config.granularity.value).alias(filter_alias)
-            if config.granularity != TimeGranularity.DAY
-            else df.select(pl.col(Cols.Date).alias(filter_alias))
-        )
-        .unique()
-        .sort(filter_alias)
-    )
-
-    pairs = [(src, tgt) for src in cols for tgt in cols if src != tgt]
-
-    te_timeseries: list[dict[str, np.float64]] = []
-
-    for timestep in timesteps[filter_alias]:
-        print(f"Processing: {timestep}")
-
-        timestep_df = df.filter(
-            pl.col(Cols.Date).dt.truncate(config.granularity.value) == timestep
-            if config.granularity != TimeGranularity.DAY
-            else pl.col(Cols.Date) == timestep
-        )
-
-        timestep_values = {
-            TEColumns.get_te_column_name(src, tgt): measure(src, tgt, timestep_df)
-            for src, tgt in pairs
-        }
-        timestep_values[Cols.Date] = timestep
-        te_timeseries.append(timestep_values)
-
-    return pl.DataFrame(te_timeseries)
+    bins = max_tent_bootstrap(config.TE, data, lag=config.LAG, at=at)
+    return get_transfer_entropy_for_bins(src, tgt, df, bins)
 
 
 def create_acf_df(acf_values, max_lag=None):
@@ -149,6 +118,56 @@ def create_acf_df(acf_values, max_lag=None):
         max_lag = len(acf_values)
 
     return pl.DataFrame({"lag": np.arange(max_lag), "value": acf_values[:max_lag]})
+
+
+def build_rolling_pairwise_measure_df(
+    df: pl.DataFrame,
+    cols: list[InstrumentCols],
+    measure: Callable[[InstrumentCols, InstrumentCols, pl.DataFrame], np.float64],
+    window_days: int = 7,
+) -> pl.DataFrame:
+    """Build a rolling window TE dataframe with daily steps.
+
+    Args:
+        df: Input dataframe with datetime index
+        cols: List of instruments to analyze
+        measure: Transfer entropy measure function
+        window_days: Size of rolling window in days (default 7)
+
+    """
+    filter_alias = "filter_var"
+
+    all_dates = (
+        df.select(pl.col(Cols.Date).dt.date().alias(filter_alias))
+        .unique()
+        .sort(filter_alias)
+    )
+
+    pairs = [(src, tgt) for src in cols for tgt in cols if src != tgt]
+    te_timeseries: list[dict[str, np.float64]] = []
+
+    for current_date in all_dates[filter_alias]:
+        print(f"Processing: {current_date}")
+
+        # Calculate window bounds
+        window_end = current_date
+        window_start = current_date - pl.duration(days=window_days - 1)
+
+        # Get data for current window
+        window_df = df.filter(
+            (pl.col(Cols.Date).dt.date() <= window_end)
+            & (pl.col(Cols.Date).dt.date() >= window_start)
+        )
+
+        # Calculate TE for all pairs in this window
+        timestep_values = {
+            TEColumns.get_te_column_name(src, tgt): measure(src, tgt, window_df)
+            for src, tgt in pairs
+        }
+        timestep_values[Cols.Date] = current_date
+        te_timeseries.append(timestep_values)
+
+    return pl.DataFrame(te_timeseries)
 
 
 def plot_acf(acf_df):
@@ -164,7 +183,7 @@ def plot_acf(acf_df):
 
 if __name__ == "__main__":
     rng = config.rng
-    futures = FuturesDataBuilder.load(DATA_PATH)
+    futures = FuturesDataBuilder.load(RETURNS_DATA)
 
     df_builder = (
         futures.with_datetime_index()
@@ -189,14 +208,14 @@ if __name__ == "__main__":
     )
     plot_acf(autocorr)
 
-    analysis_cols = [Cols.CO, Cols.ES, Cols.NK, Cols.VG, Cols.HS]
+    analysis_cols = [Cols.CO, Cols.VG, Cols.ES]
 
-    tents = build_pairwise_measure_df(
-        df_builder.remap_uniform(
+    tents = build_rolling_pairwise_measure_df(
+        df_builder.remap_gaussian(
             cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
         ).build(),
         analysis_cols,
-        lambda src, tgt, df: get_maximised_te(src, tgt, df),
+        lambda src, tgt, df: get_bootstrap_maximised_te(src, tgt, df),
     )
 
     plot_ts(
@@ -209,3 +228,4 @@ if __name__ == "__main__":
     with pl.Config(set_tbl_rows=29):
         print(tents)
     print(tents.describe())
+    tents.write_csv(TE_DATA_PATH)
