@@ -292,7 +292,10 @@ if __name__ == "__main__":
     plot_ts(
         tents,
         TEColumns.get_pairwise_te_column_names(analysis_cols),
-        filename=f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}_{config.WINDOW_SIZE}window.png",
+        filename=(
+            f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
+            f"_{config.WINDOW_SIZE}window_{config.GRANULARITY}step.png"
+        ),
     )
 
     print("=== TENTS === ")
@@ -301,5 +304,8 @@ if __name__ == "__main__":
     print(tents.describe())
     tents.write_csv(
         DATA_PATH
-        / f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}_{config.WINDOW_SIZE}window.csv"
+        / (
+            f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
+            f"_{config.WINDOW_SIZE}window_{config.GRANULARITY}step.csv"
+        )
     )
