@@ -40,13 +40,10 @@ def max_tent_bootstrap(
     data_2d = data.reshape(-1, 2)
 
     def bootstrap_te(data, bins):
-        shuffled = data.copy()
+        shuffled = data_2d.copy()
         for i in range(shuffled.shape[1]):
             shuffled[:, i] = np.random.permutation(shuffled[:, i])
-        try:
-            return tent(shuffled, bins, lag, at)
-        except Exception:
-            return float("inf")
+        return tent(shuffled, bins, lag, at)
 
     def cost(_, bins):
         try:

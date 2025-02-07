@@ -174,7 +174,6 @@ def create_acf_df(acf_values, max_lag=None):
 def process_pairwise_step(
     current_date: date,
     df: pl.DataFrame,
-    window_days: int,
     measure: Callable[[T, T, pl.DataFrame], tuple[np.float64, np.float64, np.float64]],
     pairs: list[tuple[T, T]],
 ) -> Mapping[str, np.float64 | date]:
@@ -182,7 +181,7 @@ def process_pairwise_step(
     print(f"Processing: {current_date}")
 
     window_end = current_date
-    window_start = current_date - pl.duration(days=window_days - 1)
+    window_start = current_date - pl.duration(days=config.WINDOW_SIZE - 1)
 
     window_df = df.filter(
         (pl.col(Cols.Date).dt.date() <= window_end)
@@ -208,7 +207,6 @@ def build_rolling_pairwise_measure_df(
     df: pl.DataFrame,
     cols: list[T],
     measure: Callable[[T, T, pl.DataFrame], np.float64],
-    window_days: int = 7,
 ) -> pl.DataFrame:
     """Build a rolling window TE dataframe with daily steps.
 
@@ -231,7 +229,7 @@ def build_rolling_pairwise_measure_df(
     te_timeseries: list[dict[str, np.float64]] = []
 
     te_timeseries = Parallel(n_jobs=-1)(
-        delayed(process_pairwise_step)(date, df, window_days, measure, pairs)
+        delayed(process_pairwise_step)(date, df, measure, pairs)
         for date in all_dates[filter_alias]
     )
 
@@ -250,7 +248,7 @@ def plot_acf(acf_df):
 
 
 if __name__ == "__main__":
-    TE_CALC_FN = get_quantil_binned_te
+    TE_CALC_FN = get_bootstrap_maximised_te
     analysis_cols = Cols.get_all_instruments()  # [Cols.CO, Cols.VG, Cols.ES]
 
     rng = config.rng
@@ -279,10 +277,14 @@ if __name__ == "__main__":
     )
     plot_acf(autocorr)
 
+    uniform_remap_df = df_builder.remap_uniform(
+        cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
+    ).build()
+
+    print(uniform_remap_df.describe())
+
     tents = build_rolling_pairwise_measure_df(
-        df_builder.remap_gaussian(
-            cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
-        ).build(),
+        uniform_remap_df,
         analysis_cols,
         lambda src, tgt, df: TE_CALC_FN(src, tgt, df),
     )
@@ -290,11 +292,14 @@ if __name__ == "__main__":
     plot_ts(
         tents,
         TEColumns.get_pairwise_te_column_names(analysis_cols),
-        filename=f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}.png",
+        filename=f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}_{config.WINDOW_SIZE}window.png",
     )
 
     print("=== TENTS === ")
     with pl.Config(set_tbl_rows=29):
         print(tents)
     print(tents.describe())
-    tents.write_csv(DATA_PATH / f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}.csv")
+    tents.write_csv(
+        DATA_PATH
+        / f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}_{config.WINDOW_SIZE}window.csv"
+    )

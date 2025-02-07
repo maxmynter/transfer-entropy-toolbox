@@ -42,11 +42,12 @@ class TentCalcConfig:
 
     TE: TE = TE.LOGN
     LAG = 2
-    n_bootstrap: int = 30
-    on_column: ReturnType = ReturnType.LOG
+    WINDOW_SIZE: int = 2
+    n_bootstrap: int = 100
+    on_column: ReturnType = ReturnType.UNIFORM
     get_nonlinear: bool = True
     get_bootstrap: bool = True
-    granularity: TimeGranularity = TimeGranularity.DAY
+    GRANULARITY: TimeGranularity = TimeGranularity.DAY
     rng = np.random.default_rng()
 
 
