@@ -74,6 +74,12 @@ class Columns:
             getattr(self, inst.name).get_returns(return_type) for inst in Instruments
         ]
 
+    def get_all_instruments(self) -> list[InstrumentCols]:
+        """Get list of all InstrumentCol objects."""
+        return [
+            value for value in vars(self).values() if isinstance(value, InstrumentCols)
+        ]
+
 
 class TEColumns:
     """Contains the TE column names."""

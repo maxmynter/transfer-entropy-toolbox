@@ -1,7 +1,7 @@
 """Analyse the futures time series during COVID."""
 
 from collections.abc import Callable, Mapping
-from datetime import date, timedelta
+from datetime import date
 from typing import TypeVar
 
 import matplotlib.pyplot as plt
@@ -13,12 +13,10 @@ from futures_constants import (
     MIN_TICKS_PER_DAY,
     PLOT_PATH,
     RETURNS_DATA,
-    FuturesDataInfo,
     TentCalcConfig,
 )
 from joblib import Parallel, delayed
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
-from wrangling.columns import Instruments
 
 from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
 from te_toolbox.preprocessing import ft_surrogatization
@@ -253,7 +251,7 @@ def plot_acf(acf_df):
 
 if __name__ == "__main__":
     TE_CALC_FN = get_quantil_binned_te
-    analysis_cols = list(Instruments)  # [Cols.CO, Cols.VG, Cols.ES]
+    analysis_cols = Cols.get_all_instruments()  # [Cols.CO, Cols.VG, Cols.ES]
 
     rng = config.rng
     futures = FuturesDataBuilder.load(RETURNS_DATA)
@@ -261,7 +259,7 @@ if __name__ == "__main__":
     df_builder = (
         futures.with_datetime_index()
         .drop_nulls()
-        .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=3))
+        # .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=3))
         .log_returns()
         .drop_incomplete_trading_days(MIN_TICKS_PER_DAY)
     )
