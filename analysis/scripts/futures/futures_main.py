@@ -16,6 +16,7 @@ from futures_constants import (
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
 
 from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
+from te_toolbox.preprocessing import ft_surrogatization
 from te_toolbox.stats import autocorrelation
 
 config = TentCalcConfig()
@@ -41,7 +42,7 @@ def plot_ts(df: pl.DataFrame, cols: list[str], filename="ts.png"):
 
 
 def prepare_data(
-    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
+    src: T, tgt: T, df: pl.DataFrame
 ) -> tuple[npt.NDArray, tuple[int, int]]:
     """Prepare the data arrays for TE calculation."""
     source = df[src.get_returns(config.on_column)]
@@ -50,6 +51,39 @@ def prepare_data(
     data = np.column_stack([target, source])
     at = (0, 1)  # TE source -> target for [target, source]
     return data, at
+
+
+def linear_te_mean(
+    data: npt.NDArray, bins: npt.NDArray, at: tuple[int, int]
+) -> np.float64:
+    """Calculate TE for only linear correlations with FT surrogates."""
+    tol = 10e-10
+
+    min_val = bins[0]
+    max_val = bins[-1]
+    linears = np.zeros(config.n_bootstrap)
+
+    for i in range(config.n_bootstrap):
+        lin_data = data.copy()
+        surr_data = ft_surrogatization(lin_data[:, at], config.rng)
+
+        # Rescale so we can use the same bins as the original
+        for j in at:
+            numerator = (surr_data[:, j] - surr_data[:, j].min()) * (max_val - min_val)
+            denum = surr_data[:, j].max() - surr_data[:, j].min()
+            surr_data[:, j] = numerator / denum + min_val
+            if (
+                surr_data[:, j].min() < min_val - tol
+                or surr_data[:, j].max() > max_val + tol
+            ):
+                raise ValueError(f"FT rescaling failed failed beyond tolerance {tol}")
+            else:
+                surr_data[:, j] = np.clip(surr_data[:, j], min_val, max_val)
+
+        lin_data[:, at] = surr_data
+        linears[i] = config.TE(lin_data, bins, config.LAG, at)
+
+    return np.mean(linears)
 
 
 def bootstrapped_te_mean(
@@ -66,20 +100,25 @@ def bootstrapped_te_mean(
 
 
 def get_transfer_entropy_for_bins(
-    src: InstrumentCols,
-    tgt: InstrumentCols,
+    src: T,
+    tgt: T,
     df: pl.DataFrame,
     bins: npt.NDArray,
-) -> np.float64:
+) -> tuple[np.float64, np.float64 | None]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
     te = np.float64(config.TE(data, bins, config.LAG, at))
-    return np.max([0, te - bootstrapped_te_mean(data, bins, at)])
+    sig_te = np.max([0, te - bootstrapped_te_mean(data, bins, at)])
+    if config.get_nonlinear:
+        linears = linear_te_mean(data, bins, at)
+        return sig_te, np.max(0, sig_te - linears)
+    else:
+        return sig_te, None
 
 
 def get_quantil_binned_te(
-    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
-) -> np.float64:
+    src: T, tgt: T, df: pl.DataFrame
+) -> tuple[np.float64, np.float64 | None]:
     """Calculate TE for fixed with quantil bins.
 
     (added for consistency checks with 2021 M.Sc. thesis consistency).
@@ -93,8 +132,8 @@ def get_quantil_binned_te(
 
 
 def get_maximised_te(
-    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
-) -> np.float64:
+    src: T, tgt: T, df: pl.DataFrame
+) -> tuple[np.float64, np.float64 | None]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
 
@@ -103,8 +142,8 @@ def get_maximised_te(
 
 
 def get_bootstrap_maximised_te(
-    src: InstrumentCols, tgt: InstrumentCols, df: pl.DataFrame
-) -> np.float64:
+    src: T, tgt: T, df: pl.DataFrame
+) -> tuple[np.float64, np.float64 | None]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
 
