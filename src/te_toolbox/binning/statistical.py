@@ -112,6 +112,7 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
                 f"identifying optimum. Method: {method}."
             )
 
+    logger.info(f"optimization yield: {best_n} bin edges")
     return np.linspace(np.min(data), np.max(data), best_n)
 
 
