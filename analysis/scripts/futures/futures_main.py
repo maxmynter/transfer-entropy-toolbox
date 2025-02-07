@@ -210,27 +210,20 @@ def build_rolling_pairwise_measure_df(
 ) -> pl.DataFrame:
     """Build a rolling window TE dataframe with daily steps.
 
-    Args:
-        df: Input dataframe with datetime index
-        cols: List of instruments to analyze
-        measure: Transfer entropy measure function
-        window_days: Size of rolling window in days (default 7)
+    cols: List of instruments to analyze
+    measure: Transfer entropy measure function
+    window_days: Size of rolling window in days (default 7)
 
     """
-    filter_alias = "filter_var"
-
     all_dates = (
-        df.select(pl.col(Cols.Date).dt.date().alias(filter_alias))
-        .unique()
-        .sort(filter_alias)
+        df.get_column(Cols.Date).unique().sort().to_list()[:: config.WINDOW_STEP]
     )
 
     pairs = [(src, tgt) for src in cols for tgt in cols if src != tgt]
     te_timeseries: list[dict[str, np.float64]] = []
 
     te_timeseries = Parallel(n_jobs=-1)(
-        delayed(process_pairwise_step)(date, df, measure, pairs)
-        for date in all_dates[filter_alias]
+        delayed(process_pairwise_step)(date, df, measure, pairs) for date in all_dates
     )
 
     return pl.DataFrame(te_timeseries)
@@ -294,7 +287,7 @@ if __name__ == "__main__":
         TEColumns.get_pairwise_te_column_names(analysis_cols),
         filename=(
             f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-            f"_{config.WINDOW_SIZE}window_{config.GRANULARITY}step.png"
+            f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step.png"
         ),
     )
 
@@ -306,6 +299,6 @@ if __name__ == "__main__":
         DATA_PATH
         / (
             f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-            f"_{config.WINDOW_SIZE}window_{config.GRANULARITY}step.csv"
+            f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step.csv"
         )
     )

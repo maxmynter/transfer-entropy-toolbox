@@ -41,13 +41,13 @@ class TentCalcConfig:
     """Configure the TE Calculation."""
 
     TE: TE = TE.LOGN
-    LAG = 1
+    LAG = 3
     WINDOW_SIZE: int = 5
+    WINDOW_STEP: int = 1
     n_bootstrap: int = 100
     on_column: ReturnType = ReturnType.UNIFORM
     get_nonlinear: bool = True
     get_bootstrap: bool = True
-    GRANULARITY: TimeGranularity = TimeGranularity.WEEK
     rng = np.random.default_rng()
 
 
