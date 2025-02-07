@@ -23,6 +23,8 @@ from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
 from te_toolbox.preprocessing import ft_surrogatization
 from te_toolbox.stats import autocorrelation
 
+from .wrangling.columns import Instruments
+
 config = TentCalcConfig()
 
 T = TypeVar("T", bound=InstrumentCols)
@@ -251,7 +253,9 @@ def plot_acf(acf_df):
 
 
 if __name__ == "__main__":
-    TE_CALC_FN = get_bootstrap_maximised_te
+    TE_CALC_FN = get_quantil_binned_te
+    analysis_cols = list(Instruments)  # [Cols.CO, Cols.VG, Cols.ES]
+
     rng = config.rng
     futures = FuturesDataBuilder.load(RETURNS_DATA)
 
@@ -277,8 +281,6 @@ if __name__ == "__main__":
         )
     )
     plot_acf(autocorr)
-
-    analysis_cols = [Cols.CO, Cols.VG, Cols.ES]
 
     tents = build_rolling_pairwise_measure_df(
         df_builder.remap_gaussian(
