@@ -1,8 +1,8 @@
 """Analyse the futures time series during COVID."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import date, timedelta
-from typing import Mapping, TypeVar
+from typing import TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -99,8 +99,8 @@ def bootstrapped_te_mean(
     boot_te = np.zeros(config.n_bootstrap)
     for i in range(config.n_bootstrap):
         bs_data = data.copy()
-        bs_data[:, 0] = config.rng.permutation(data[:, 0])
-        bs_data[:, 1] = config.rng.permutation(data[:, 1])
+        bs_data[:, at[0]] = config.rng.permutation(data[:, at[0]])
+        bs_data[:, at[1]] = config.rng.permutation(data[:, at[1]])
         boot_te[i] = config.TE(bs_data, bins, config.LAG, at)
     return np.mean(boot_te, dtype=np.float64)
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     df_builder = (
         futures.with_datetime_index()
         .drop_nulls()
-        # .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=3))
+        .slice_before(FuturesDataInfo.no_missing_start.value + timedelta(days=3))
         .log_returns()
         .drop_incomplete_trading_days(MIN_TICKS_PER_DAY)
     )

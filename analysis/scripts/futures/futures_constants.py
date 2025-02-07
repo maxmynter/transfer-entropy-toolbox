@@ -41,7 +41,7 @@ class TentCalcConfig:
     """Configure the TE Calculation."""
 
     TE: TE = TE.LOGN
-    LAG = 3
+    LAG = 2
     n_bootstrap: int = 30
     on_column: ReturnType = ReturnType.LOG
     get_nonlinear: bool = True
