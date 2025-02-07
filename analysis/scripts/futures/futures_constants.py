@@ -45,6 +45,7 @@ class TentCalcConfig:
     n_bootstrap: int = 30
     on_column: ReturnType = ReturnType.LOG
     get_nonlinear: bool = True
+    get_bootstrap: bool = True
     granularity: TimeGranularity = TimeGranularity.DAY
     rng = np.random.default_rng()
 

@@ -105,26 +105,33 @@ def bootstrapped_te_mean(
     return np.mean(boot_te, dtype=np.float64)
 
 
-def get_transfer_entropy_for_bins(
+def get_transfer_entropy_surros_for_bins(
     src: T,
     tgt: T,
     df: pl.DataFrame,
     bins: npt.NDArray,
-) -> tuple[np.float64, np.float64 | None]:
+) -> tuple[np.float64, np.float64, np.float64]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
+
     te = np.float64(config.TE(data, bins, config.LAG, at))
-    sig_te = np.max([0, te - bootstrapped_te_mean(data, bins, at)])
-    if config.get_nonlinear:
-        linears = linear_te_mean(data, bins, at)
-        return sig_te, np.max(0, sig_te - linears)
-    else:
-        return sig_te, None
+
+    bootstrap_te = (
+        bootstrapped_te_mean(data, bins, at)
+        if config.get_bootstrap
+        else np.float64("nan")
+    )
+
+    ft_te = (
+        linear_te_mean(data, bins, at) if config.get_nonlinear else np.float64("nan")
+    )
+
+    return te, bootstrap_te, ft_te
 
 
 def get_quantil_binned_te(
     src: T, tgt: T, df: pl.DataFrame
-) -> tuple[np.float64, np.float64 | None]:
+) -> tuple[np.float64, np.float64, np.float64]:
     """Calculate TE for fixed with quantil bins.
 
     (added for consistency checks with 2021 M.Sc. thesis consistency).
@@ -134,27 +141,27 @@ def get_quantil_binned_te(
         [data.min(), np.quantile(data, 0.05), 0.0, np.quantile(data, 0.95), data.max()]
     )
 
-    return get_transfer_entropy_for_bins(src, tgt, df, bins)
+    return get_transfer_entropy_surros_for_bins(src, tgt, df, bins)
 
 
 def get_maximised_te(
     src: T, tgt: T, df: pl.DataFrame
-) -> tuple[np.float64, np.float64 | None]:
+) -> tuple[np.float64, np.float64, np.float64]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
 
     bins = max_tent(config.TE, data, lag=config.LAG, at=at)
-    return get_transfer_entropy_for_bins(src, tgt, df, bins)
+    return get_transfer_entropy_surros_for_bins(src, tgt, df, bins)
 
 
 def get_bootstrap_maximised_te(
     src: T, tgt: T, df: pl.DataFrame
-) -> tuple[np.float64, np.float64 | None]:
+) -> tuple[np.float64, np.float64, np.float64]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
 
     bins = max_tent_bootstrap(config.TE, data, lag=config.LAG, at=at)
-    return get_transfer_entropy_for_bins(src, tgt, df, bins)
+    return get_transfer_entropy_surros_for_bins(src, tgt, df, bins)
 
 
 def create_acf_df(acf_values, max_lag=None):
@@ -169,7 +176,7 @@ def process_pairwise_step(
     current_date: date,
     df: pl.DataFrame,
     window_days: int,
-    measure: Callable[[T, T, pl.DataFrame], tuple[np.float64, np.float64]],
+    measure: Callable[[T, T, pl.DataFrame], tuple[np.float64, np.float64, np.float64]],
     pairs: list[tuple[T, T]],
 ) -> Mapping[str, np.float64 | date]:
     """Process transfer entropy of dataframe slice."""
@@ -185,11 +192,14 @@ def process_pairwise_step(
 
     timestep_values: dict[str, np.float64 | date] = {}
     for src, tgt in pairs:
-        te, nonlinear = measure(src, tgt, window_df)
+        (
+            te,
+            uncorr_te,
+            linear_te,
+        ) = measure(src, tgt, window_df)
         timestep_values[TEColumns.get_te_column_name(src, tgt)] = te
-        timestep_values[f"nonlinear_{TEColumns.get_te_column_name(src, tgt)}"] = (
-            nonlinear or np.float64("nan")
-        )
+        timestep_values[f"bs_surr_{TEColumns.get_te_column_name(src, tgt)}"] = uncorr_te
+        timestep_values[f"ft_surr_{TEColumns.get_te_column_name(src, tgt)}"] = linear_te
 
     timestep_values[Cols.Date] = current_date
     return timestep_values
@@ -241,6 +251,7 @@ def plot_acf(acf_df):
 
 
 if __name__ == "__main__":
+    TE_CALC_FN = get_bootstrap_maximised_te
     rng = config.rng
     futures = FuturesDataBuilder.load(RETURNS_DATA)
 
@@ -274,17 +285,17 @@ if __name__ == "__main__":
             cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
         ).build(),
         analysis_cols,
-        lambda src, tgt, df: get_bootstrap_maximised_te(src, tgt, df),
+        lambda src, tgt, df: TE_CALC_FN(src, tgt, df),
     )
 
     plot_ts(
         tents,
         TEColumns.get_pairwise_te_column_names(analysis_cols),
-        filename=f"tents_ts_{config.LAG}Lag.png",
+        filename=f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}.png",
     )
 
     print("=== TENTS === ")
     with pl.Config(set_tbl_rows=29):
         print(tents)
     print(tents.describe())
-    tents.write_csv(DATA_PATH / f"TE_{config.LAG}Lag.csv")
+    tents.write_csv(DATA_PATH / f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}.csv")
