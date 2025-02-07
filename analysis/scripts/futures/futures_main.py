@@ -1,18 +1,22 @@
 """Analyse the futures time series during COVID."""
 
 from collections.abc import Callable
+from datetime import date, timedelta
+from typing import Mapping, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import polars as pl
 from futures_constants import (
+    DATA_PATH,
     MIN_TICKS_PER_DAY,
     PLOT_PATH,
     RETURNS_DATA,
-    TE_DATA_PATH,
+    FuturesDataInfo,
     TentCalcConfig,
 )
+from joblib import Parallel, delayed
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
 
 from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
@@ -20,6 +24,8 @@ from te_toolbox.preprocessing import ft_surrogatization
 from te_toolbox.stats import autocorrelation
 
 config = TentCalcConfig()
+
+T = TypeVar("T", bound=InstrumentCols)
 
 return_cols = [
     Cols.VG.log_returns_5m,
@@ -159,10 +165,40 @@ def create_acf_df(acf_values, max_lag=None):
     return pl.DataFrame({"lag": np.arange(max_lag), "value": acf_values[:max_lag]})
 
 
+def process_pairwise_step(
+    current_date: date,
+    df: pl.DataFrame,
+    window_days: int,
+    measure: Callable[[T, T, pl.DataFrame], tuple[np.float64, np.float64]],
+    pairs: list[tuple[T, T]],
+) -> Mapping[str, np.float64 | date]:
+    """Process transfer entropy of dataframe slice."""
+    print(f"Processing: {current_date}")
+
+    window_end = current_date
+    window_start = current_date - pl.duration(days=window_days - 1)
+
+    window_df = df.filter(
+        (pl.col(Cols.Date).dt.date() <= window_end)
+        & (pl.col(Cols.Date).dt.date() >= window_start)
+    )
+
+    timestep_values: dict[str, np.float64 | date] = {}
+    for src, tgt in pairs:
+        te, nonlinear = measure(src, tgt, window_df)
+        timestep_values[TEColumns.get_te_column_name(src, tgt)] = te
+        timestep_values[f"nonlinear_{TEColumns.get_te_column_name(src, tgt)}"] = (
+            nonlinear or np.float64("nan")
+        )
+
+    timestep_values[Cols.Date] = current_date
+    return timestep_values
+
+
 def build_rolling_pairwise_measure_df(
     df: pl.DataFrame,
-    cols: list[InstrumentCols],
-    measure: Callable[[InstrumentCols, InstrumentCols, pl.DataFrame], np.float64],
+    cols: list[T],
+    measure: Callable[[T, T, pl.DataFrame], np.float64],
     window_days: int = 7,
 ) -> pl.DataFrame:
     """Build a rolling window TE dataframe with daily steps.
@@ -185,26 +221,10 @@ def build_rolling_pairwise_measure_df(
     pairs = [(src, tgt) for src in cols for tgt in cols if src != tgt]
     te_timeseries: list[dict[str, np.float64]] = []
 
-    for current_date in all_dates[filter_alias]:
-        print(f"Processing: {current_date}")
-
-        # Calculate window bounds
-        window_end = current_date
-        window_start = current_date - pl.duration(days=window_days - 1)
-
-        # Get data for current window
-        window_df = df.filter(
-            (pl.col(Cols.Date).dt.date() <= window_end)
-            & (pl.col(Cols.Date).dt.date() >= window_start)
-        )
-
-        # Calculate TE for all pairs in this window
-        timestep_values = {
-            TEColumns.get_te_column_name(src, tgt): measure(src, tgt, window_df)
-            for src, tgt in pairs
-        }
-        timestep_values[Cols.Date] = current_date
-        te_timeseries.append(timestep_values)
+    te_timeseries = Parallel(n_jobs=-1)(
+        delayed(process_pairwise_step)(date, df, window_days, measure, pairs)
+        for date in all_dates[filter_alias]
+    )
 
     return pl.DataFrame(te_timeseries)
 
@@ -260,11 +280,11 @@ if __name__ == "__main__":
     plot_ts(
         tents,
         TEColumns.get_pairwise_te_column_names(analysis_cols),
-        filename="tents_ts.png",
+        filename=f"tents_ts_{config.LAG}Lag.png",
     )
 
     print("=== TENTS === ")
     with pl.Config(set_tbl_rows=29):
         print(tents)
     print(tents.describe())
-    tents.write_csv(TE_DATA_PATH)
+    tents.write_csv(DATA_PATH / f"TE_{config.LAG}Lag.csv")
