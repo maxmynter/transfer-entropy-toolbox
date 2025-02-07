@@ -18,12 +18,11 @@ from futures_constants import (
 )
 from joblib import Parallel, delayed
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
+from wrangling.columns import Instruments
 
 from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
 from te_toolbox.preprocessing import ft_surrogatization
 from te_toolbox.stats import autocorrelation
-
-from .wrangling.columns import Instruments
 
 config = TentCalcConfig()
 
