@@ -94,13 +94,14 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
             stationary_count = (
                 stationary_count + 1 if rel_change < stationary_threshold else 0
             )
+
             trend_is_worse = (minimize and current_avg > last_avg) or (
-                not minimize and current_avg < last_avg
+                (not minimize) and current_avg < last_avg
             )
+            if trend_is_worse:
+                worse_trend_count += 1
 
-            worse_trend_count = worse_trend_count + 1 if trend_is_worse else 0
-
-            if worse_trend_count >= trend_patience or stationary_count > trend_patience:
+            if worse_trend_count > trend_patience or stationary_count > trend_patience:
                 break
 
             last_avg = current_avg
