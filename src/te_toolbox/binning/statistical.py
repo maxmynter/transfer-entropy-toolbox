@@ -16,7 +16,7 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
     minimize: bool = True,
     window_size: int = 20,
     trend_patience: int = 10,
-    stationary_threshold: float = 1e-4,
+    stationary_threshold: float = 1e-3,
     method: str = "unknown",
 ) -> npt.NDArray[np.float64]:
     """
@@ -90,20 +90,22 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
                 if last_avg != 0
                 else last_avg
             )
+            is_stationary = rel_change < stationary_threshold
+            stationary_count = (stationary_count + 1) if is_stationary else 0
 
-            stationary_count = (
-                stationary_count + 1 if rel_change < stationary_threshold else 0
-            )
+            if minimize:
+                relative_to_best = current_avg / (best_cost + 10e-10)
+            else:
+                relative_to_best = best_cost / (current_avg + 10e-10)
 
-            trend_is_worse = (minimize and current_avg > last_avg) or (
-                (not minimize) and current_avg < last_avg
-            )
-            if trend_is_worse:
+            far_from_peak = relative_to_best > 1 + 0.05
+            if far_from_peak:
                 worse_trend_count += 1
+            else:
+                worse_trend_count = 0
 
             if worse_trend_count > trend_patience or stationary_count > trend_patience:
                 break
-
             last_avg = current_avg
     else:
         if max_edges < n:

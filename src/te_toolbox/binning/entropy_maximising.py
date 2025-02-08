@@ -49,7 +49,7 @@ def max_tent_bootstrap(
         try:
             te = tent(data_2d, bins, lag, at=at)
             bootstrapped = [bootstrap_te(data_2d, bins) for _ in range(n_bootstrap)]
-            return te - np.mean(bootstrapped)
+            return np.maximum(0, te - np.mean(bootstrapped))
         except Exception:
             print("Error calculating Max Entropywith bootstrapped correction")
             return float("inf")
