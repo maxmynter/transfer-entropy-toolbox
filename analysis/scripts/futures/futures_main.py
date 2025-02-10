@@ -240,8 +240,9 @@ def plot_acf(acf_df):
     plt.savefig(PLOT_PATH / "autocorrelation.png")
 
 
+TE_CALC_FN = get_bootstrap_maximised_te
+
 if __name__ == "__main__":
-    TE_CALC_FN = get_bootstrap_maximised_te
     analysis_cols = Cols.get_all_instruments()  # [Cols.CO, Cols.VG, Cols.ES]
 
     rng = config.rng
