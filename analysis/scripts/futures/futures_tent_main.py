@@ -7,7 +7,7 @@ import numpy as np
 import polars as pl
 import seaborn as sns
 from futures_constants import DATA_PATH, PLOT_PATH, TentCalcConfig
-from futures_main import TE_CALC_FN
+from futures_main import TE_CALC_FN, filename
 from wrangling import Cols
 from wrangling.columns import TEColumns
 
@@ -73,12 +73,9 @@ if __name__ == "__main__":
     sns.set()
 
     # Read and prepare data
-    filename = (
-        f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-        f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step.csv"
-    )
-    print(f"Reading in {filename}")
-    df = pl.read_csv(DATA_PATH / filename)
+    csv_filename = filename + ".csv"
+    print(f"Reading in {csv_filename}")
+    df = pl.read_csv(DATA_PATH / csv_filename)
     df = df[config.WINDOW_SIZE : -config.WINDOW_SIZE]
     print(df.head())
 

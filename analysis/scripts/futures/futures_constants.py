@@ -45,7 +45,7 @@ class TentCalcConfig:
     WINDOW_SIZE: int = 5
     WINDOW_STEP: int = 1
     n_bootstrap: int = 100
-    on_column: ReturnType = ReturnType.UNIFORM
+    on_column: ReturnType = ReturnType.LOG
     get_nonlinear: bool = True
     get_bootstrap: bool = True
     rng = np.random.default_rng()

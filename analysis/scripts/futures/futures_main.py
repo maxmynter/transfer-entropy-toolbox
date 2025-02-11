@@ -17,6 +17,7 @@ from futures_constants import (
 )
 from joblib import Parallel, delayed
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
+from wrangling.columns import ReturnType
 
 from te_toolbox.binning.entropy_maximising import max_tent, max_tent_bootstrap
 from te_toolbox.preprocessing import ft_surrogatization
@@ -121,9 +122,7 @@ def get_transfer_entropy_surros_for_bins(
         else np.float64("nan")
     )
 
-    ft_te = (
-        linear_te_mean(data, bins, at) if config.get_nonlinear else np.float64("nan")
-    )
+    ft_te = linear_te_mean(data, at) if config.get_nonlinear else np.float64("nan")
 
     return te, bootstrap_te, ft_te
 
@@ -241,7 +240,11 @@ def plot_acf(acf_df):
 
 
 TE_CALC_FN = get_bootstrap_maximised_te
-
+filename = (
+    f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
+    f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step"
+    f"sourcecol={config.on_column.value}"
+)
 if __name__ == "__main__":
     analysis_cols = Cols.get_all_instruments()  # [Cols.CO, Cols.VG, Cols.ES]
 
@@ -271,14 +274,17 @@ if __name__ == "__main__":
     )
     plot_acf(autocorr)
 
-    uniform_remap_df = df_builder.remap_uniform(
-        cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
-    ).build()
+    if config.on_column == ReturnType.UNIFORM:
+        remapped_df = df_builder.remap_uniform(
+            cols=analysis_cols, source_col=InstrumentCols.log_returns_5m, rng=rng
+        ).build()
+    else:
+        remapped_df = df_builder.build()
 
-    print(uniform_remap_df.describe())
+    print(remapped_df.describe())
 
     tents = build_rolling_pairwise_measure_df(
-        uniform_remap_df,
+        remapped_df,
         analysis_cols,
         lambda src, tgt, df: TE_CALC_FN(src, tgt, df),
     )
@@ -286,20 +292,11 @@ if __name__ == "__main__":
     plot_ts(
         tents,
         TEColumns.get_pairwise_te_column_names(analysis_cols),
-        filename=(
-            f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-            f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step.png"
-        ),
+        filename=(filename + ".png"),
     )
 
     print("=== TENTS === ")
     with pl.Config(set_tbl_rows=29):
         print(tents)
     print(tents.describe())
-    tents.write_csv(
-        DATA_PATH
-        / (
-            f"TE_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-            f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step.csv"
-        )
-    )
+    tents.write_csv(DATA_PATH / f"{filename}.csv")
