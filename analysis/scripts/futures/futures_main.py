@@ -77,7 +77,7 @@ def linear_te_mean(
         for j in at:
             numerator = (surr_data[:, j] - surr_data[:, j].min()) * (max_val - min_val)
             denum = surr_data[:, j].max() - surr_data[:, j].min()
-            surr_data[:, j] = numerator / denum + min_val
+            surr_data[:, j] = numerator / (denum + tol) + min_val
             if (
                 surr_data[:, j].min() < min_val - tol
                 or surr_data[:, j].max() > max_val + tol
@@ -122,7 +122,9 @@ def get_transfer_entropy_surros_for_bins(
         else np.float64("nan")
     )
 
-    ft_te = linear_te_mean(data, at) if config.get_nonlinear else np.float64("nan")
+    ft_te = (
+        linear_te_mean(data, bins, at) if config.get_nonlinear else np.float64("nan")
+    )
 
     return te, bootstrap_te, ft_te
 

@@ -7,7 +7,7 @@ import numpy as np
 import polars as pl
 import seaborn as sns
 from futures_constants import DATA_PATH, PLOT_PATH, TentCalcConfig
-from futures_main import TE_CALC_FN, filename
+from futures_main import filename
 from wrangling import Cols
 from wrangling.columns import TEColumns
 
@@ -62,9 +62,7 @@ def create_te_plot(
     plt.tight_layout()
 
     # Save plot with reduction type in filename
-    plt.savefig(
-        PLOT_PATH / f"{TE_CALC_FN.__name__}_{reduction.value}pairwise_tents.png"
-    )
+    plt.savefig(PLOT_PATH / f"{reduction.name}_{filename}_pairwise_tents.png")
     plt.close()  # Close the figure to free memory
 
 
