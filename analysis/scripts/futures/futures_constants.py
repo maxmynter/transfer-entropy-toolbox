@@ -1,5 +1,6 @@
 """Constants for the Futures Time Series Analysis."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -41,14 +42,24 @@ class TentCalcConfig:
     """Configure the TE Calculation."""
 
     TE: TE = TE.LOGN
-    LAG = 3
-    WINDOW_SIZE: int = 1
+    LAG = 1
+    WINDOW_SIZE: int = 9
     WINDOW_STEP: int = 1
     n_bootstrap: int = 100
     on_column: ReturnType = ReturnType.LOG
     get_nonlinear: bool = True
     get_bootstrap: bool = True
     rng = np.random.default_rng()
+
+
+def generate_filename(config: TentCalcConfig, calc_fn: Callable) -> str:
+    """Generate the filename from config and calculation function."""
+    filename = (
+        f"tents_ts_{config.LAG}Lag_fn={calc_fn.__name__}"
+        f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step"
+        f"sourcecol={config.on_column.value}"
+    )
+    return filename
 
 
 MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.

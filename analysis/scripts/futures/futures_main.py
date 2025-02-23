@@ -14,6 +14,7 @@ from futures_constants import (
     PLOT_PATH,
     RETURNS_DATA,
     TentCalcConfig,
+    generate_filename,
 )
 from joblib import Parallel, delayed
 from wrangling import Cols, FuturesDataBuilder, InstrumentCols, TEColumns
@@ -242,11 +243,7 @@ def plot_acf(acf_df):
 
 
 TE_CALC_FN = get_bootstrap_maximised_te
-filename = (
-    f"tents_ts_{config.LAG}Lag_fn={TE_CALC_FN.__name__}"
-    f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step"
-    f"sourcecol={config.on_column.value}"
-)
+filename = generate_filename(config, TE_CALC_FN)
 if __name__ == "__main__":
     analysis_cols = Cols.get_all_instruments()  # [Cols.CO, Cols.VG, Cols.ES]
 
