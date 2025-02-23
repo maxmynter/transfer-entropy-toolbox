@@ -198,8 +198,8 @@ def process_pairwise_step(
             linear_te,
         ) = measure(src, tgt, window_df)
         timestep_values[TEColumns.get_te_column_name(src, tgt)] = te
-        timestep_values[f"bs_surr_{TEColumns.get_te_column_name(src, tgt)}"] = uncorr_te
-        timestep_values[f"ft_surr_{TEColumns.get_te_column_name(src, tgt)}"] = linear_te
+        timestep_values[TEColumns.get_bs_column_name(src, tgt)] = uncorr_te
+        timestep_values[TEColumns.get_ft_column_name(src, tgt)] = linear_te
 
     timestep_values[Cols.Date] = current_date
     return timestep_values

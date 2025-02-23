@@ -90,6 +90,16 @@ class TEColumns:
         return f"{src.base}->{tgt.base}"
 
     @classmethod
+    def get_bs_column_name(cls, src: InstrumentCols, tgt: InstrumentCols) -> str:
+        """Get bootstrap surrogate normalized TE from column name."""
+        return f"bs_surr_{cls.get_te_column_name(src, tgt)}"
+
+    @classmethod
+    def get_ft_column_name(cls, src: InstrumentCols, tgt: InstrumentCols) -> str:
+        """Get fourier surrogate normalized TE from column name."""
+        return f"ft_surr_{cls.get_te_column_name(src, tgt)}"
+
+    @classmethod
     def get_pairwise_te_column_names(
         cls, instruments: list[InstrumentCols]
     ) -> list[str]:
