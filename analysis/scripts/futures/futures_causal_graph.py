@@ -64,7 +64,7 @@ def max_bootstrap_early_stopping_closure(src, tgt, df):
     te, bs, _ft = get_bootstrap_maximised_te(
         src, tgt, df, window_size=30, trend_patience=30
     )
-    return float(max((te - bs) / te, 0))
+    return float(max((te - bs), 0))
 
 
 if __name__ == "__main__":
