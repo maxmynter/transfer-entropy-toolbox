@@ -16,10 +16,8 @@ sns.set()
 
 def create_and_plot_te_graph(result, threshold=0.0, plot_path=""):
     """Create and plot TE graphs with minimal customization."""
-    # Create graphs
     graph = nx.DiGraph()
 
-    # Add edges with weights
     for edge, weight in result.items():
         if float(weight) > threshold:
             source, target = edge.split("->")
@@ -27,7 +25,6 @@ def create_and_plot_te_graph(result, threshold=0.0, plot_path=""):
 
     pos = nx.spring_layout(graph, seed=42, k=0.8)
 
-    # Plot pre-lockdown graph
     plt.figure(figsize=(10, 8))
     nx.draw(
         graph,
@@ -43,7 +40,7 @@ def create_and_plot_te_graph(result, threshold=0.0, plot_path=""):
         graph,
         pos,
         edge_labels={e: f"{w:.3f}" for e, w in labels.items()},
-        label_pos=0.3,
+        label_pos=0.8,
     )
     plt.title("Pre-Lockdown Causal Graph")
     plt.axis("off")
@@ -53,9 +50,9 @@ def create_and_plot_te_graph(result, threshold=0.0, plot_path=""):
 
 cols = Cols.get_all_instruments()
 p1start = datetime(2019, 11, 1)
-p1end = datetime(2019, 11, 14)
+p1end = datetime(2019, 11, 8)
 p2start = datetime(2020, 3, 15)
-p2end = datetime(2020, 3, 31)
+p2end = datetime(2020, 3, 22)
 
 
 def max_bootstrap_early_stopping_closure(src, tgt, df):
@@ -64,7 +61,10 @@ def max_bootstrap_early_stopping_closure(src, tgt, df):
     This was added to cross-check the early stopping checks.
     They were conclusive and the correct binnings were identified.
     """
-    return get_bootstrap_maximised_te(src, tgt, df, window_size=100, trend_patience=100)
+    te, bs, _ft = get_bootstrap_maximised_te(
+        src, tgt, df, window_size=30, trend_patience=30
+    )
+    return float(max((te - bs) / te, 0))
 
 
 if __name__ == "__main__":
@@ -93,16 +93,18 @@ if __name__ == "__main__":
 
     print("Calculating transfer entropy for pre-lockdown period...")
     for src, tgt in [(s, t) for s in cols for t in cols if s != t]:
-        te, _bs, _ft = max_bootstrap_early_stopping_closure(src, tgt, pre_df)
-        pre_result[f"{src.base}->{tgt.base}"] = float(te)
+        pre_result[f"{src.base}->{tgt.base}"] = max_bootstrap_early_stopping_closure(
+            src, tgt, post_df
+        )
 
     print("Calculating transfer entropy for post-lockdown period...")
     for src, tgt in [(s, t) for s in cols for t in cols if s != t]:
-        te, _bs, _ft = max_bootstrap_early_stopping_closure(src, tgt, post_df)
-        post_result[f"{src.base}->{tgt.base}"] = float(te)
+        post_result[f"{src.base}->{tgt.base}"] = max_bootstrap_early_stopping_closure(
+            src, tgt, post_df
+        )
 
     create_and_plot_te_graph(
-        pre_result, plot_path=NETWORK_PATH / f"pre-lockdown_{p1start}-{p1end}-te.png"
+        pre_result, plot_path=NETWORK_PATH / f"pre-lockdown_{p1start}-{p1end}.png"
     )
     create_and_plot_te_graph(
         post_result, plot_path=NETWORK_PATH / f"in-lockdown-{p2start}-{p2end}.png"
