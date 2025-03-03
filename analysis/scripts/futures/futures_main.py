@@ -156,12 +156,19 @@ def get_maximised_te(
 
 
 def get_bootstrap_maximised_te(
-    src: T, tgt: T, df: pl.DataFrame
+    src: T, tgt: T, df: pl.DataFrame, window_size: int = 20, trend_patience: int = 10
 ) -> tuple[np.float64, np.float64, np.float64]:
     """Calculate TE between variables for dataset."""
     data, at = prepare_data(src, tgt, df)
 
-    bins = max_tent_bootstrap(config.TE, data, lag=config.LAG, at=at)
+    bins = max_tent_bootstrap(
+        config.TE,
+        data,
+        lag=config.LAG,
+        at=at,
+        window_size=window_size,
+        trend_patience=trend_patience,
+    )
     return get_transfer_entropy_surros_for_bins(src, tgt, df, bins)
 
 

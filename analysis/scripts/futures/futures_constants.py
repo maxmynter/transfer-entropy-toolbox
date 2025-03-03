@@ -71,3 +71,6 @@ RETURNS_DATA = DATA_PATH / Path("futures_returns.csv")
 TE_DATA_PATH = DATA_PATH / Path("transfer_entropies_bootstrap.csv")
 PLOT_PATH = Path("analysis/plots/full_futures/")
 PLOT_PATH.mkdir(exist_ok=True)
+
+NETWORK_PATH = PLOT_PATH / Path("networks")
+NETWORK_PATH.mkdir(exist_ok=True)
