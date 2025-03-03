@@ -14,7 +14,7 @@ dependencies = ["numpy"]
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "ruff", "numpy-typing", "mypy"]
 legacy-tests = ["scipy", "scikit-learn", "pandas"]
-analysis = ["polars", "matplotlib","seaborn", "joblib"]
+analysis = ["polars", "matplotlib","seaborn", "joblib", "networkx"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
