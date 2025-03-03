@@ -50,9 +50,9 @@ def create_and_plot_te_graph(result, threshold=0.0, plot_path=""):
 
 cols = Cols.get_all_instruments()
 p1start = datetime(2019, 11, 1)
-p1end = datetime(2019, 11, 8)
-p2start = datetime(2020, 3, 15)
-p2end = datetime(2020, 3, 22)
+p1end = datetime(2019, 11, 5)
+p2start = datetime(2020, 3, 26)
+p2end = datetime(2020, 3, 30)
 
 
 def max_bootstrap_early_stopping_closure(src, tgt, df):
@@ -64,7 +64,7 @@ def max_bootstrap_early_stopping_closure(src, tgt, df):
     te, bs, _ft = get_bootstrap_maximised_te(
         src, tgt, df, window_size=30, trend_patience=30
     )
-    return float(max((te - bs), 0))
+    return te
 
 
 if __name__ == "__main__":
@@ -104,8 +104,12 @@ if __name__ == "__main__":
         )
 
     create_and_plot_te_graph(
-        pre_result, plot_path=NETWORK_PATH / f"pre-lockdown_{p1start}-{p1end}.png"
+        pre_result,
+        plot_path=NETWORK_PATH / f"pre-lockdown_{p1start.strftime('%y-%m-%d')}-"
+        f"{p1end.strftime('%y-%m-%d')}.png",
     )
     create_and_plot_te_graph(
-        post_result, plot_path=NETWORK_PATH / f"in-lockdown-{p2start}-{p2end}.png"
+        post_result,
+        plot_path=NETWORK_PATH / f"in-lockdown-{p2start.strftime('%y-%m-%d')}-"
+        f"{p2end.strftime('%y-%m-%d')}.png",
     )
