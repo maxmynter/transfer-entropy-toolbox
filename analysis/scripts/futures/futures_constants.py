@@ -43,7 +43,7 @@ class TentCalcConfig:
 
     TE: TE = TE.LOGN
     LAG = 1
-    WINDOW_SIZE: int = 9
+    WINDOW_SIZE: int = 5
     WINDOW_STEP: int = 1
     n_bootstrap: int = 100
     on_column: ReturnType = ReturnType.LOG

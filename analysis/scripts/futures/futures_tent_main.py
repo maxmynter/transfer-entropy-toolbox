@@ -74,7 +74,7 @@ if __name__ == "__main__":
     csv_filename = filename + ".csv"
     print(f"Reading in {csv_filename}")
     df = pl.read_csv(DATA_PATH / csv_filename)
-    df = df[config.WINDOW_SIZE : -config.WINDOW_SIZE]
+    df = df[config.WINDOW_SIZE :]
     print(df.head())
 
     # Create plots for each reduction type
