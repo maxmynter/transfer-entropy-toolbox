@@ -7,7 +7,7 @@ import networkx as nx
 import polars as pl
 import seaborn as sns
 from futures_constants import DATA_PATH, NETWORK_PATH
-from futures_main import config, filename, get_bootstrap_maximised_te
+from futures_main import config, filename
 from wrangling.columns import Cols
 
 StatsRecord = dict[str, str | datetime | date | float | int]
@@ -89,18 +89,6 @@ def create_and_plot_te_graph(
     plt.axis("off")
     plt.savefig(plot_path, dpi=300)
     plt.close()
-
-
-def max_bootstrap_early_stopping_closure(src, tgt, df):
-    """Get bootstrap maximised TE with fixed params for early stopping.
-
-    This was added to cross-check the early stopping checks.
-    They were conclusive and the correct binnings were identified.
-    """
-    te, bs, _ft = get_bootstrap_maximised_te(
-        src, tgt, df, window_size=20, trend_patience=20
-    )
-    return te
 
 
 def plot_statistics_over_time(stats_tracker, plot_path):

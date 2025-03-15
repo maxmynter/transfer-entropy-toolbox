@@ -21,7 +21,7 @@ class SpecificConfig(TentCalcConfig):
 
     TE = TE.LOGN
     LAG = 1
-    WINDOW_SIZE = 7
+    WINDOW_SIZE = 5
     WINDOW_STEP = 1
     on_column = ReturnType.LOG
 
