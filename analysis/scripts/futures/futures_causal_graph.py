@@ -29,10 +29,16 @@ def create_and_plot_te_graph(result: dict, threshold=0.0, plot_path=""):
     for instrument in all_instruments:
         graph.add_node(instrument)
 
+    weights = []
     for edge, weight in result.items():
         if float(weight) > threshold:
             src, tgt = edge.split("->")
             graph.add_edge(src, tgt, weight=float(weight))
+            weights.append(float(weight))
+
+    avg_weight = sum(weights) / len(weights) if weights else 0
+    median_weight = sorted(weights)[len(weights) // 2] if weights else 0
+
     if NODE_POSITIONS is None:
         NODE_POSITIONS = nx.spring_layout(graph, seed=42, k=0.8)
 
@@ -53,6 +59,15 @@ def create_and_plot_te_graph(result: dict, threshold=0.0, plot_path=""):
         NODE_POSITIONS,
         edge_labels={e: f"{w:.3f}" for e, w in labels.items()},
         label_pos=0.8,
+    )
+
+    plt.text(
+        0.05,
+        0.05,  # Position in figure coordinates (bottom left)
+        f"Average: {avg_weight:.3f}\nMedian: {median_weight:.3f}",
+        transform=plt.gcf().transFigure,  # Use figure coordinates
+        bbox={"facecolor": "white", "alpha": 0.7, "boxstyle": "round"},
+        fontsize=12,
     )
 
     plt.axis("off")
