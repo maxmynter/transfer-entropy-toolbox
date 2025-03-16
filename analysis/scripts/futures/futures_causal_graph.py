@@ -142,15 +142,20 @@ if __name__ == "__main__":
     stats_tracker: StatsTracker = []
     for current_date in df[Cols.Date].to_list():
         print(f"Processing window: {config.WINDOW_SIZE} days to {current_date}")
-
         result = {}
         pairs = [(s, t) for s in cols for t in cols if s != t]
         for src, tgt in pairs:
-            result[f"{src.base}->{tgt.base}"] = (
+            raw = (
                 df.filter(pl.col(Cols.Date) == current_date)
                 .select(f"{src.base}->{tgt.base}")
                 .item()
             )
+            bs = (
+                df.filter(pl.col(Cols.Date) == current_date)
+                .select(f"bs_surr_{src.base}->{tgt.base}")
+                .item()
+            )
+            result[f"{src.base}->{tgt.base}"] = max(0, raw - bs)
         create_and_plot_te_graph(
             result,
             threshold=0.0,
