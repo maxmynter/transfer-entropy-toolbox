@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: Transfer Entropy Toolbox
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Max
+    family-names: Mynter
+    email: maxmynter@icloud.com
+repository-code: 'https://github.com/maxmynter/transfer-entropy-toolbox'
+license: MIT
