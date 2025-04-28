@@ -78,7 +78,6 @@ if __name__ == "__main__":
     print(df.head())
 
     # Create plots for each reduction type
-    config = TentCalcConfig()
     for reduction in ColPrefix:
         print(f"Creating plot for {reduction.name} reduction")
         create_te_plot(df, reduction, config)
