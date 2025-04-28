@@ -1,6 +1,5 @@
 """Constants for the Futures Time Series Analysis."""
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -33,8 +32,8 @@ class TimeGranularity(Enum):
 class FuturesDataInfo(Enum):
     """Specific attributes of the futures dataset."""
 
-    no_missing_start: datetime = datetime(2019, 11, 1, 1, 20)
-    no_missing_end: datetime = datetime(2020, 5, 15, 11, 25)
+    no_missing_start = datetime(2019, 11, 1, 1, 20)
+    no_missing_end = datetime(2020, 5, 15, 11, 25)
 
 
 @dataclass
@@ -50,17 +49,6 @@ class TentCalcConfig:
     get_nonlinear: bool = True
     get_bootstrap: bool = True
     rng = np.random.default_rng()
-
-
-def generate_filename(config: TentCalcConfig, calc_fn: Callable | str) -> str:
-    """Generate the filename from config and calculation function."""
-    generating_fn = calc_fn.__name__ if isinstance(calc_fn, Callable) else calc_fn
-    filename = (
-        f"tents_ts_{config.LAG}Lag_fn={generating_fn}"
-        f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step"
-        f"sourcecol={config.on_column.value}"
-    )
-    return filename
 
 
 MIN_TICKS_PER_DAY = 200  # Minimum data in a trading day for robust entropy calculation.
