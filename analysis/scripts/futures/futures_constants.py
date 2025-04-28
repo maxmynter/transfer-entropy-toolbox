@@ -52,10 +52,11 @@ class TentCalcConfig:
     rng = np.random.default_rng()
 
 
-def generate_filename(config: TentCalcConfig, calc_fn: Callable) -> str:
+def generate_filename(config: TentCalcConfig, calc_fn: Callable | str) -> str:
     """Generate the filename from config and calculation function."""
+    generating_fn = calc_fn.__name__ if isinstance(calc_fn, Callable) else calc_fn
     filename = (
-        f"tents_ts_{config.LAG}Lag_fn={calc_fn.__name__}"
+        f"tents_ts_{config.LAG}Lag_fn={generating_fn}"
         f"_{config.WINDOW_SIZE}window_{config.WINDOW_STEP}step"
         f"sourcecol={config.on_column.value}"
     )
