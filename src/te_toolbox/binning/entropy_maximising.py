@@ -57,7 +57,7 @@ def max_tent_bootstrap(  # noqa: PLR0913 # I want these args here
             bootstrapped = [bootstrap_te(data_2d, bins) for _ in range(n_bootstrap)]
             return np.maximum(0, te - np.mean(bootstrapped))
         except Exception:
-            print("Error calculating Max Entropywith bootstrapped correction")
+            print("Error calculating Max Entropy with bootstrapped correction")
             return float("inf")
 
     tent_maximising_bins = optimize_bins(
