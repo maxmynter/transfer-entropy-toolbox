@@ -10,9 +10,9 @@ from futures_constants import (
 )
 from futures_main import (
     build_rolling_pairwise_measure_df,
-    get_transfer_entropy_surros_for_bins,
 )
 from numpy.typing import NDArray
+from util import get_transfer_entropy_surros_for_bins
 from wrangling import Cols, FuturesDataBuilder
 
 config = TentCalcConfig()
