@@ -6,27 +6,23 @@ from futures_constants import (
     MIN_TICKS_PER_DAY,
     RETURNS_DATA,
     TentCalcConfig,
-    generate_filename,
 )
 from futures_main import (
     build_rolling_pairwise_measure_df,
 )
 from numpy.typing import NDArray
-from util import get_transfer_entropy_surros_for_bins
+from util import (
+    date_return_cols,
+    generate_filename,
+    get_transfer_entropy_surros_for_bins,
+    return_cols,
+)
 from wrangling import Cols, FuturesDataBuilder
 
 config = TentCalcConfig()
 
 N_BINS = [2**n for n in range(1, 11)]
 
-return_cols = [
-    Cols.VG.log_returns_5m,
-    Cols.ES.log_returns_5m,
-    Cols.HS.log_returns_5m,
-    Cols.NK.log_returns_5m,
-    Cols.CO.log_returns_5m,
-]
-date_return_cols = [Cols.Date, *return_cols]
 
 if __name__ == "__main__":
     analysis_cols = Cols.get_all_instruments()
