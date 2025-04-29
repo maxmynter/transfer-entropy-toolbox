@@ -18,6 +18,8 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
     trend_patience: int = 10,
     stationary_threshold: float = 1e-3,
     method: str = "unknown",
+    lower_bound: float | None = None,
+    upper_bound: float | None = None,
 ) -> npt.NDArray[np.float64]:
     """
     Find optimal binning by scanning until cost function stops improving.
@@ -41,6 +43,8 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
         trend_patience: Number of consecutive worse/stationary windows before stopping
         stationary_threshold: Maximum relative change threshold to detect stationarity
         method: Name of binning method being used (for logging)
+        lower_bound: Lowest bin edge if not to be inferred from data
+        upper_bound: Highest bin edge if not to be inferred from data
 
     Returns:
     -------
@@ -54,10 +58,12 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
     costs = []
     best_cost = float("inf") if minimize else float("-inf")
     best_n = min_edges
+    lower = lower_bound or np.min(data)
+    upper = upper_bound or np.max(data)
 
     # Walk initial window size for moving average calculation
     for n_bins in range(min_edges, min_edges + window_size):
-        bins = np.linspace(np.min(data), np.max(data), n_bins)
+        bins = np.linspace(lower, upper, n_bins)
         hist, _ = np.histogram(data, bins)
         cost = cost_function(hist, bins)
         costs.append(cost)
@@ -115,7 +121,7 @@ def optimize_bins(  # noqa: PLR0913 # Useful optimization parameters and interna
             )
 
     logger.info(f"optimization yield: {best_n} bin edges")
-    return np.linspace(np.min(data), np.max(data), best_n)
+    return np.linspace(lower, upper, best_n)
 
 
 def knuth_cost(hist: npt.NDArray[np.int64], bins: npt.NDArray[np.float64]) -> float:

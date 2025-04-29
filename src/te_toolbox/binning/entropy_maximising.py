@@ -10,7 +10,16 @@ from ..entropies import (
 from .statistical import optimize_bins
 
 
-def max_tent(tent, data: np.ndarray, lag=1, at: tuple[int, int] = (0, 1)):
+def max_tent(  # noqa: PLR0913 # I want these arguements
+    tent,
+    data: np.ndarray,
+    lag=1,
+    at: tuple[int, int] = (0, 1),
+    window_size: int = 20,
+    trend_patience: int = 10,
+    lower_bound: float | None = None,
+    upper_bound: float | None = None,
+):
     """Get tent maximising bins using binning optimizer."""
     data_2d = data.reshape(-1, 2)
 
@@ -25,10 +34,12 @@ def max_tent(tent, data: np.ndarray, lag=1, at: tuple[int, int] = (0, 1)):
         data=data_2d.flatten(),
         cost_function=cost,
         minimize=False,
-        window_size=20,
-        trend_patience=10,
+        window_size=window_size,
+        trend_patience=trend_patience,
         stationary_threshold=1e-4,
         method=tent.__name__,
+        lower_bound=lower_bound,
+        upper_bound=upper_bound,
     )
     return tent_maximising_bins
 
@@ -41,6 +52,8 @@ def max_tent_bootstrap(  # noqa: PLR0913 # I want these args here
     n_bootstrap: int = 10,
     window_size: int = 20,
     trend_patience: int = 10,
+    lower_bound: float | None = None,
+    upper_bound: float | None = None,
 ):
     """Get tent minus spurious correlation maximising bins using binning optimizer."""
     data_2d = data.reshape(-1, 2)
@@ -68,6 +81,8 @@ def max_tent_bootstrap(  # noqa: PLR0913 # I want these args here
         trend_patience=trend_patience,
         stationary_threshold=1e-4,
         method=tent.__name__,
+        lower_bound=lower_bound,
+        upper_bound=upper_bound,
     )
     return tent_maximising_bins
 
