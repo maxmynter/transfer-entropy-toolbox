@@ -1,4 +1,4 @@
-"""Analyse the Transfer entropy data."""
+"""Plot the Transfer entropy data."""
 
 from enum import Enum
 
@@ -61,23 +61,19 @@ def create_te_plot(
     plt.xticks(rotation=45)
     plt.tight_layout()
 
-    # Save plot with reduction type in filename
     plt.savefig(PLOT_PATH / f"{reduction.name}_{filename}_pairwise_tents.png")
-    plt.close()  # Close the figure to free memory
+    plt.close()
 
 
 if __name__ == "__main__":
-    # Set style once for all plots
     sns.set()
 
-    # Read and prepare data
     csv_filename = filename + ".csv"
     print(f"Reading in {csv_filename}")
     df = pl.read_csv(DATA_PATH / csv_filename)
     df = df[config.WINDOW_SIZE :]
     print(df.head())
 
-    # Create plots for each reduction type
     for reduction in ColPrefix:
         print(f"Creating plot for {reduction.name} reduction")
         create_te_plot(df, reduction, config)
