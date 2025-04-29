@@ -7,7 +7,7 @@ import networkx as nx
 import polars as pl
 import seaborn as sns
 from futures_constants import DATA_PATH, NETWORK_PATH
-from futures_main import config, filename
+from futures_main import config
 from wrangling.columns import Cols
 
 StatsRecord = dict[str, str | datetime | date | float | int]
@@ -132,7 +132,10 @@ def plot_statistics_over_time(stats_tracker, plot_path):
     plt.close()
 
 
-csv_filename = filename + ".csv"
+csv_filename = (
+    "tents_ts_1Lag_fn=get_maximised_te_fixed_range_5window_1step"
+    "sourcecol=log returns (5m).csv"
+)
 
 if __name__ == "__main__":
     cols = Cols.get_all_instruments()
@@ -150,12 +153,7 @@ if __name__ == "__main__":
                 .select(f"{src.base}->{tgt.base}")
                 .item()
             )
-            bs = (
-                df.filter(pl.col(Cols.Date) == current_date)
-                .select(f"bs_surr_{src.base}->{tgt.base}")
-                .item()
-            )
-            result[f"{src.base}->{tgt.base}"] = max(0, raw - bs)
+            result[f"{src.base}->{tgt.base}"] = raw
         create_and_plot_te_graph(
             result,
             threshold=0.0,
