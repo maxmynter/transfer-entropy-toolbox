@@ -12,7 +12,7 @@ from wrangling.columns import TEColumns
 
 config = TentCalcConfig()
 FILENAME = (
-    "tents_ts_1Lag_fn=get_maximised_te_fixed_range_5window_1step"
+    f"tents_ts_1Lag_fn=get_maximised_te_fixed_range_{TentCalcConfig.WINDOW_SIZE}window_1step"
     "sourcecol=log returns (5m)"
 )
 
